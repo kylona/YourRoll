@@ -3,12 +3,11 @@ import { StyleSheet } from 'react-native';
 
 import EditScreenInfo from '../components/EditScreenInfo';
 import { Text, View } from '../components/Themed';
-import Chat from '../components/Chat.js';
+import Fire from '../Fire.js'
 
-export default function TabTwoScreen() {
+export default function ChatScreen() {
   return (
     <View style={styles.container}>
-      <Chat/>
     </View>
   );
 }
