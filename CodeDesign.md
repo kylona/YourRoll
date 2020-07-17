@@ -105,12 +105,9 @@
       - Send Messages
 
   6. P2PShare:
-    - Peer to Peer Sharing **to avoid server costs**
-    - Always uploads to server as well (Uploads are free)
-      - If the peer stops sharing, default to the server
-
-
-
+    * Peer to Peer Sharing **to avoid server costs**
+    * Always uploads to server as well (Uploads are free)
+      * If the peer stops sharing, default to the server
 
 ## Hierarchy 
 
