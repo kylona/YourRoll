@@ -8,36 +8,54 @@ import useColorScheme from '../hooks/useColorScheme';
 import MapScreen from '../screens/MapScreen';
 import ActionScreen from '../screens/ActionScreen';
 import ChatScreen from '../screens/ChatScreen';
+import MacroScreen from '../screens/MacroScreen';
 import { BottomTabParamList, TabOneParamList, TabTwoParamList } from '../types';
+import { TouchableOpacity, Text, View } from 'react-native';
+import {HeaderTitle, HeaderRight} from '../components/Header.js';
+import AppState from '../util/AppState';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamList>();
+let colorScheme = 'dark'
 
 export default function BottomTabNavigator() {
-  const colorScheme = useColorScheme();
+  colorScheme = useColorScheme();
+  const [chatBadgeCount, setChatBadgeCount] = React.useState(0)
+  React.useEffect(() => {
+    AppState.shared.addListener(() => {
+      setChatBadgeCount(AppState.shared.unreadMessages)
+    })
+  }, []);
 
   return (
     <BottomTab.Navigator
-      initialRouteName="TabOne"
-      tabBarOptions={{ activeTintColor: Colors[colorScheme].tint }}>
+      initialRouteName="Character"
+      screenOptions={{headerShown: false}}
+      lazy={false}
+      tabBarOptions={{
+        activeTintColor: Colors[colorScheme].tabIconSelected,
+        inactiveTintColor: Colors[colorScheme].tabIconDefault,
+      }}>
       <BottomTab.Screen
         name="Map"
         component={MapNavigator}
         options={{
-          tabBarIcon: ({ color }) => <TabBarIcon name="ios-code" color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon name="md-map" color={color} />,
         }}
       />
       <BottomTab.Screen
-        name="Action"
+        name="Character"
         component={ActionNavigator}
         options={{
-          tabBarIcon: ({ color }) => <TabBarIcon name="ios-code" color={color} />,
+          headerShown: false,
+          tabBarIcon: ({ color }) => <TabBarIcon name="ios-body" color={color} />,
         }}
       />
       <BottomTab.Screen
         name="Chat"
         component={ChatNavigator}
         options={{
-          tabBarIcon: ({ color }) => <TabBarIcon name="ios-code" color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon name="ios-text" color={color} />,
+          tabBarBadge: AppState.shared.unreadMessages == 0 ? undefined : AppState.shared.unreadMessages
         }}
       />
     </BottomTab.Navigator>
@@ -47,7 +65,7 @@ export default function BottomTabNavigator() {
 // You can explore the built-in icon families and icons on the web at:
 // https://icons.expo.fyi/
 function TabBarIcon(props: { name: string; color: string }) {
-  return <Ionicons size={30} style={{ marginBottom: -3 }} {...props} />;
+  return <Ionicons size={25} style={{ marginBottom: -3 }} {...props} />;
 }
 
 // Each tab has its own navigation stack, you can read more about this pattern here:
@@ -60,7 +78,9 @@ function MapNavigator() {
       <MapStack.Screen
         name="MapScreen"
         component={MapScreen}
-        options={{ headerTitle: 'Map' }}
+        options={{
+					headerShown:false
+				}}
       />
     </MapStack.Navigator>
   );
@@ -74,7 +94,9 @@ function ActionNavigator() {
       <ActionStack.Screen
         name="ActionScreen"
         component={ActionScreen}
-        options={{ headerTitle: 'Action' }}
+        options={{
+					headerShown:false
+				}}
       />
     </ActionStack.Navigator>
   );
@@ -88,7 +110,9 @@ function ChatNavigator() {
       <ChatStack.Screen
         name="ChatScreen"
         component={ChatScreen}
-        options={{ headerTitle: 'Chat' }}
+        options={{
+					headerShown:false,
+				}}
       />
     </ChatStack.Navigator>
   );
