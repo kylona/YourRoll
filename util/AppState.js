@@ -59,7 +59,7 @@ class AppState {
       race: '',
       class: '',
       strength: '10',
-      dextarity: '10',
+      dexterity: '10',
       constitution: '10',
       intelligence: '10',
       wisdom: '10',
@@ -78,7 +78,7 @@ class AppState {
       chasave: '$chamod',
       coreStats: [
         'strength',
-        'dextarity',
+        'dexterity',
         'constitution',
         'intelligence',
         'wisdom',
@@ -104,7 +104,7 @@ class AppState {
       ],
       statCalculations: [
         'strmod = floor(strength/2)-5',
-        'dexmod = floor(dextarity/2)-5',
+        'dexmod = floor(dexterity/2)-5',
         'conmod = floor(constitution/2)-5',
         'intmod = floor(intelligence/2)-5',
         'wismod = floor(wisdom/2)-5',
@@ -165,8 +165,14 @@ class AppState {
 				return e.id == message.id
 			})
 			if (index == -1) return
-      AppState.shared.messages[index] = message
+      AppState.shared.messages[index]._id = message._id
+      AppState.shared.messages[index].text = message.text
+      AppState.shared.messages[index].reactions = message.reactions
 			AppState.shared.saveState()
+  }
+
+  updateMessage(message) {
+    Fire.shared.updateMessage(message)
   }
 
   sendMessages(messages) {
@@ -313,10 +319,11 @@ class AppState {
     if (updateId) {
       AppState.shared.player._id = updateId
     }
+    let truncatedMessages = AppState.shared.messages.slice(0, 50)
     const state = {
       macros: AppState.shared.macros,
       character: AppState.shared.character,
-			messages: AppState.shared.messages,
+			messages: truncatedMessages,
       version: '0.04',
       player: AppState.shared.player,
     }

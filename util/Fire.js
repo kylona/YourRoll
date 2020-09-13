@@ -70,10 +70,10 @@ class Fire {
   }
 
   parseMessage(snapshot) {
-    const { timestamp: numberStamp, id, text, user, image, audio, reply, rolls } = snapshot.val();
+    const { timestamp: numberStamp, id, text, user, image, audio, reply, rolls, reactions } = snapshot.val();
     const timestamp = new Date(numberStamp);
     return {
-      _id: id,
+      _id: 'Message_' + Math.random().toString(36).substr(2,9),
       id,
       timestamp,
       text,
@@ -82,6 +82,7 @@ class Fire {
       audio,
       reply,
       rolls,
+      reactions,
     };
   };
 
@@ -150,7 +151,9 @@ class Fire {
       const data = {
         to: token,
         title:title,
-        body: body
+        priority: "high",
+        sound: "default", // android 7.0 , 6, 5 , 4
+        body: body,
       }
 			try {
 				 response = await fetch(

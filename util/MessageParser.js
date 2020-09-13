@@ -105,6 +105,7 @@ export default class MessageParser {
   }
 
   static parseBlings(string) {
+    let origString = string
     let blingWrapped = string.match(/\$[a-zA-Z\d-]+/g)
     if (blingWrapped == null || blingWrapped.length == 0) return string
     for (let b in blingWrapped) {
@@ -113,10 +114,12 @@ export default class MessageParser {
         string = string.replace(blingWrapped[b].replace(/\s/,''), AppState.shared.getStat(bling))
       }
     }
+    if (origString == string) return string
     return MessageParser.parseBlings(string)
   }
 
   static parseMacros(string) {
+    let origString = string
     let hashWrapped = string.match(/\#[a-zA-Z\d-]+/g)
     if (hashWrapped == null || hashWrapped.length == 0) return string
     for (let h in hashWrapped) {
@@ -125,7 +128,29 @@ export default class MessageParser {
         string = string.replace(hashWrapped[h].replace(/\s/,''), AppState.shared.getMacro(hash))
       }
     }
+    if (origString == string) return string
     return MessageParser.parseMacros(string)
+  }
+
+  static getPartialCommand(text) {
+    let words = text.split(" ")
+    let lastWord = words[words.length -1]
+    if (lastWord.startsWith("#") || lastWord.startsWith("$")) {
+      return lastWord
+    }
+    else return null
+  }
+
+  static getPartialCommandGuesses(parCom) {
+    let guesses = []
+    if (parCom == null) return guesses
+    for (let macro in AppState.shared.macros) {
+      if (macro.startsWith(parCom.slice(1, parCom.length))) guesses.push("#" + macro)
+    }
+    for (let stat in AppState.shared.character) {
+      if (stat.startsWith(parCom.slice(1, parCom.length))) guesses.push("$" + stat)
+    }
+    return guesses
   }
 
 }

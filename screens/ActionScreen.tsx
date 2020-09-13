@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors['dark'].accent,
+    backgroundColor: Colors['dark'].primaryLight,
     zIndex: 10,
   })},
 });

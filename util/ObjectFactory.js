@@ -12,6 +12,13 @@ export default class ObjectFactory {
     }
   }
 
+  static updateMessage(props) {
+    const id = props.id
+    let message = ObjectFactory.createMessage(props)
+    message.id = id
+    return message 
+  }
+
   static createMessage(props) {
     const id = 'Message_' + Math.random().toString(36).substr(2,9)
     let text = props.text
@@ -20,7 +27,7 @@ export default class ObjectFactory {
     let audio = props.audio
     let rolls = props.rolls
     let image = props.image
-    let reacts = props.reacts
+    let reactions = props.reactions
     let timestamp = Fire.shared.timestamp
     if (!text) {
       text = null
@@ -40,8 +47,8 @@ export default class ObjectFactory {
     if (!image) {
       image = null
     }
-    if (!reacts) {
-      reacts = null
+    if (!reactions) {
+      reactions = null
     }
     return {
       id: id,
@@ -51,7 +58,7 @@ export default class ObjectFactory {
       audio: audio,
       rolls: rolls,
       image: image,
-      reacts: reacts,
+      reactions: reactions,
       timestamp: Fire.shared.timestamp,
     }
   }

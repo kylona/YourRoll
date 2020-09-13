@@ -272,7 +272,7 @@ export default class Bubble extends React.Component {
             this.styledBubbleToPrevious(),
             wrapperStyle && wrapperStyle[position],
         ]}>
-          <TouchableWithoutFeedback onLongPress={this.onLongPress} accessibilityTraits='text' {...this.props.touchableProps}>
+          <TouchableWithoutFeedback delayLongPress={130} onLongPress={this.onLongPress} accessibilityTraits='text' {...this.props.touchableProps}>
             <View>
               {this.renderBubbleContent()}
               <View style={[

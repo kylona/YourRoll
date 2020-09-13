@@ -11,10 +11,20 @@ import ImagePicker from '../util/ImagePicker';
 import BlobCache from '../util/BlobCache';
 
 
-export default function MacroScreen(props) {
+export default function CharacterSheetScreen(props) {
 
   const [scrollEnabled, setScrollEnabled] = React.useState(true)
-  const [update, forceUpdate] = React.useState(true)
+  const [characterStats, setCharacterStats] = React.useState(AppState.shared.character.stats) //code to remember characterStats
+  const [statCalculations, setStatCalculations] = React.useState(AppState.shared.character.statCalculations)
+
+  React.useEffect(() => {
+    let unsubscribe = AppState.shared.addListener(() => {
+      setCharacterStats({...AppState.shared.character.stats})
+      setStatCalculations({...AppState.shared.character.statCalculations})
+
+    })
+    return unsubscribe
+  }, []);
 
   return (
     <View style={styles.container}>

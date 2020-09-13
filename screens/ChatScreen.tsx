@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { Clipboard, Image, Keyboard, StyleSheet } from 'react-native';
-import { Text, View } from '../components/Themed';
+import { View, Clipboard, Image, Keyboard, ScrollView, StyleSheet, Vibration } from 'react-native';
+import { Text } from '../components/Themed';
 import Colors from '../constants/Colors.ts';
 import RecordingPanel from '../components/RecordingPanel';
 import AudioBubble from '../components/AudioBubble';
@@ -15,17 +15,33 @@ import { GiftedChat, Bubble, Composer, InputToolbar, Send } from '../components/
 import { Ionicons } from '@expo/vector-icons';
 import GestureRecognizer, {swipeDirections} from 'react-native-swipe-gestures';
 import { TouchableOpacity } from 'react-native-gesture-handler'
+import ReactionsPanel from '../components/ReactionPanel';
+import AutoComplete from '../components/AutoComplete';
 
 
 export default function ChatScreen(props) {
+  const [composeText, setComposeText] = React.useState("")
   const [recordPanelEnabled, enableRecordPanel] = React.useState(false)
 	const [attachedReply, attachReply] = React.useState(null)
 	const [messages, setMessages] = React.useState([...AppState.shared.messages])
+  const [selectedMessage, selectMessage] = React.useState(null)
+  const [reactPanelPos, setReactPanelPos] = React.useState(null)
 	const [isLoading, setLoading] = React.useState(false)
+  const [keyboardUp, setKeyboardUp] = React.useState(false)
 	const theme = useColorScheme();
 
   const keyboardWillShow = () => {
     enableRecordPanel(false)
+    setKeyboardUp(true)
+  }
+  const keyboardDidShow = () => {
+    setKeyboardUp(true)
+  }
+  const keyboardDidHide = () => {
+    setKeyboardUp(false)
+  }
+  const keyboardWillHide = () => {
+    setKeyboardUp(false)
   }
 
 	React.useEffect(() => {
@@ -43,12 +59,18 @@ export default function ChatScreen(props) {
 
 	React.useEffect(() => {
     Keyboard.addListener("keyboardWillShow", keyboardWillShow)
+    Keyboard.addListener("keyboardDidShow", keyboardDidShow)
+    Keyboard.addListener("keyboardDidHide", keyboardDidHide)
+    Keyboard.addListener("keyboardWillHide", keyboardWillHide)
     let unsubscribeAppState = AppState.shared.addListener(() => {
       setMessages([...AppState.shared.messages])
     })
     return () => {
       Fire.shared.offMessages()
       Keyboard.removeListener("keyboardWillShow", keyboardWillShow)
+      Keyboard.removeListener("keyboardDidShow", keyboardDidShow)
+      Keyboard.removeListener("keyboardDidHide", keyboardDidHide)
+      Keyboard.removeListener("keyboardWillHide", keyboardWillHide)
       unsubscribeAppState()
     }
 	},[]);
@@ -147,26 +169,6 @@ export default function ChatScreen(props) {
       </View>
     )
   }	
-
-  const renderAccessory = () => {
-    if (attachedReply == null) return null
-    let text = 'Replying to ' + attachedReply.user.name + ": " + attachedReply.text
-    return (
-      <View style={styles.accessory}>
-        <Text numberOfLines={1} ellipsizeMode='tail' style={styles.replyText}>{text}</Text>
-        <Image style={[styles.avatar, {marginRight: 10}]} source={{uri: attachedReply.image}}/>
-        <TouchableOpacity 
-          onPress={() => { attachReply(null)}}
-          style= {{flex:0}}
-        >
-          <Ionicons
-            name='md-close-circle'
-            size={30}
-            color={Colors[theme].textLight}/>
-        </TouchableOpacity>
-      </View>
-    )
-  }
 
 	const renderMessageAudio = (props) => {
     let bubble = (
@@ -275,16 +277,15 @@ export default function ChatScreen(props) {
     return diceBubble
   }
 
-  const setLongPress = (props) => {
+
+  const showActionSheet = (message, context) => {
     let lpActions = [] 
     let actionMap = []
-    actionMap.push(()=>{attachReply(props.currentMessage)})
-    lpActions.push("Reply")
-    if (props.currentMessage && props.currentMessage.text) {
+    if (message && message.text) {
       actionMap.push( (message) => {Clipboard.setString(message.text)})
       lpActions.push("Copy Text")
     }
-    if (props.currentMessage.user._id == getUser()._id) { //if the user wrote the message
+    if (message.user._id == getUser()._id) { //if the user wrote the message
       actionMap.push( (message) => {
         Fire.shared.deleteMessage(message)
       })
@@ -292,29 +293,66 @@ export default function ChatScreen(props) {
     }
     actionMap.push( () => {})
     lpActions.push("Cancel")
+    context.actionSheet().showActionSheetWithOptions({
+      options: lpActions,
+      cancelButtonIndex: lpActions.length - 1
+    }, (buttonIndex) => {
+      actionMap[buttonIndex](message)
+    })
+  }
 
+  const setLongPress = (props) => {
     props.onLongPress = (context, message) => {
-      context.actionSheet().showActionSheetWithOptions({
-        options: lpActions,
-        cancelButtonIndex: lpActions.length - 1
-      }, (buttonIndex) => {
-        actionMap[buttonIndex](message)
-      })
+      message.context = context
+      selectMessage(message)
+      if (props.marker) {
+         props.marker.measure((x, y, width, height, pageX, pageY) => {
+           setReactPanelPos({x: pageX, y: pageY})
+         })
+      }
     }
-
     return props 
+  }
+
+  const getReactionIndicator = (props) => {
+    let reactionText = ""
+    if (props.currentMessage.reactions) {
+      for (let r in props.currentMessage.reactions) {
+        reactionText = reactionText + props.currentMessage.reactions[r].reaction
+      }
+      /*
+      let numReactions = Object.values(props.currentMessage.reactions).length
+      if (numReactions > 1) {
+        reactionText = reactionText + " " + numReactions + " "
+      }
+      */
+    }
+    if (reactionText == "") return null
+    let riStyle = styles.reactionsIndicatorLeft
+    if (props.currentMessage.user._id == getUser()._id) {
+      riStyle = styles.reactionsIndicatorRight
+    }
+    return (
+      <View style={riStyle}>
+        <Text style={styles.reactionEmojiFont}>{reactionText}</Text>
+      </View>
+    )
   }
 
 	const renderBubble = (props) => {
     let lpProps = setLongPress(props)
+		let marker = null
     let bubble = (
-        <GestureRecognizer
-          onSwipeRight={()=>{attachReply(props.currentMessage)}}
+        <View style={{flex:0}}
+					ref={(ref) => { props.marker = ref }}
+					onLayout={({nativeEvent}) => {
+					}}
         >
           {getReplyBubble(props)}
           <Bubble {...props}/>
           {getDiceBubble(props)}
-        </GestureRecognizer>
+          {getReactionIndicator(props)}
+        </View>
     );
     return bubble;
   }
@@ -322,12 +360,60 @@ export default function ChatScreen(props) {
   const renderAudioBubble = (props) => {
     return <AudioBubble {...props} />
   }
+
+
+  const renderAttachedReply = () => {
+    if (attachedReply == null) return null
+    let text = 'Replying to ' + attachedReply.user.name + ": " + attachedReply.text
+    return (
+      <View style={styles.accessory}>
+        <Text numberOfLines={1} ellipsizeMode='tail' style={styles.replyText}>{text}</Text>
+        <Image style={[styles.avatar, {marginRight: 10}]} source={{uri: attachedReply.image}}/>
+        <TouchableOpacity 
+          onPress={() => { attachReply(null)}}
+          style= {{flex:0}}
+        >
+          <Ionicons
+            name='md-close-circle'
+            size={30}
+            color={Colors[theme].textLight}/>
+        </TouchableOpacity>
+      </View>
+    )
+  }
+
+  const renderAutoComplete = () => {
+    let parCom = MessageParser.getPartialCommand(composeText) 
+    let guesses = MessageParser.getPartialCommandGuesses(parCom)
+    if (!keyboardUp || guesses.findIndex((e) => {return e == parCom}) != -1 || guesses.length == 0) return {autoComplete: null, acHeight: 0}
+    let guessViews = []
+    let acHeight = 0
+    return {
+      autoComplete: (
+        <AutoComplete
+          guesses={guesses}
+          height={120}
+          onHeightChange={(height) => {acHeight = height}}
+          onAutoComplete={(guess) => {
+            setComposeText(composeText.replace(parCom,guess))
+          }}
+        />
+      ),
+      acHeight: 120
+    }
+  }
+
   
 	const renderInputToolbar = (props) => {
-    let accessoryBar = renderAccessory()
+    let attachedReply = renderAttachedReply()
+    let {autoComplete, acHeight} = renderAutoComplete()
+    let accHeight = attachedReply != null ? 42 : 0
+    accHeight += acHeight
+    props.text = composeText
     return (
-      <View style={styles.inputField(attachedReply != null)}>
-        {accessoryBar}
+      <View style={styles.inputField(accHeight)}>
+        {autoComplete}
+        {attachedReply}
         <InputToolbar {...props} containerStyle={styles.inputBar}/>
       </View>
     )
@@ -351,6 +437,7 @@ export default function ChatScreen(props) {
 			<GiftedChat
 				messages={messages}
 				onSend={sendTextMessage}
+        onInputTextChanged={(text) => {setComposeText(text)}}
 				user={getUser()}
 				renderUsernameOnMessage={true}
 				showUserAvatar={true}
@@ -363,7 +450,7 @@ export default function ChatScreen(props) {
 				renderSend={renderSend}
 				renderMessageAudio={(props) => renderAudioBubble(props)}
 				renderBubble={(props) => renderBubble(props)}
-        bottomOffset={Platform.OS =='ios' ? 30 : -5}
+        bottomOffset={Platform.OS =='ios' ? 65 : -5}
 				onLoadEarlier={async () => {
 					if(isLoading) return
 					setLoading(true)
@@ -378,6 +465,41 @@ export default function ChatScreen(props) {
           sendAudioMessage(url)
         }}
       />
+      <View pointerEvents='box-none' style={styles.overlay}>
+        <ReactionsPanel
+         pos={reactPanelPos}
+         dismissPressed={() => {
+          setReactPanelPos(null)
+         }}
+         replyPressed={() => {
+          attachReply(selectedMessage)
+          setReactPanelPos(null)
+         }}
+         reactionPressed={(reaction) => {
+           let message = selectedMessage
+           let user = getUser()
+           if (!message.reactions) {
+              message.reactions = {}
+           }
+           if (message.reactions[user._id] && message.reactions[user._id].reaction == reaction) {
+             //Toggle if you react the same way twice
+             delete message.reactions[user._id]  
+           }
+           else {
+             message.reactions[user._id] = {
+               user: user,
+               reaction: reaction
+             }
+           }
+           AppState.shared.updateMessage(ObjectFactory.updateMessage(message))
+           setReactPanelPos(null)
+         }}
+         morePressed={() => {
+           showActionSheet(selectedMessage, selectedMessage.context)
+           setReactPanelPos(null)
+         }}
+        />
+      </View>
     </View>
   );
 }
@@ -388,6 +510,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  overlay: {
+    position:'absolute',
+    width: '100%',
+    height: '100%',
   },
   giftedContainer: {
     height: '100%',
@@ -446,7 +573,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     paddingLeft: 10,
     paddingRight: 10,
-    backgroundColor: Colors['dark'].primaryDark,
+    backgroundColor: Colors['dark'].primary,
     paddingRight:30,
   },
   composer: {
@@ -467,11 +594,11 @@ const styles = StyleSheet.create({
 		marginRight: 80,
     backgroundColor: Colors['dark'].primaryDark,
   },
-	inputField: (acc) => {return( {
+	inputField: (accHeight) => {return( {
     backgroundColor: Colors['dark'].primaryDark,
     width:'100%',
-    height: acc ? 90 : 48,
-    marginTop: acc ? -42 : null,
+    height: 48 + accHeight,
+    marginTop: -accHeight,
   })},
 	diceBubbleRight: {
     width: 200,
@@ -487,20 +614,17 @@ const styles = StyleSheet.create({
     zIndex: -1,
   },
   diceBubbleLeft: {
-    width: 200,
     alignSelf: 'flex-start',
     justifyContent: 'flex-start',
     backgroundColor: Colors['dark'].accentDark,
     borderTopRightRadius: 10,
     borderBottomLeftRadius: 10,
     borderBottomRightRadius: 10,
-		margin: 5,
     paddingTop: 15,
     marginTop: -15,
     zIndex: -1,
   },
 	replyBubbleRight: {
-    width: 200,
     justifyContent: 'flex-start',
     backgroundColor: Colors['dark'].primary,
     borderTopLeftRadius: 10,
@@ -512,7 +636,6 @@ const styles = StyleSheet.create({
     zIndex: -1,
   },
   replyBubbleLeft: {
-    width: 200,
     justifyContent: 'flex-start',
     backgroundColor: Colors['dark'].primary,
     borderTopLeftRadius: 10,
@@ -533,5 +656,37 @@ const styles = StyleSheet.create({
     color: Colors['dark'].textLight,
     opacity: 0.8,
   },
+  reactionsIndicatorRight: {
+    flex: 0,
+    backgroundColor: Colors['dark'].primary,
+    alignSelf: 'flex-end',
+    alignContent: 'center',
+    marginTop: -5,
+    marginRight: 10,
+    height: 27,
+    borderRadius: 14,
+    borderColor: Colors['dark'].primaryDarker,
+    borderWidth: 2,
+  },
+  reactionsIndicatorLeft: {
+    flex: 0,
+    backgroundColor: Colors['dark'].primary,
+    alignSelf: 'flex-end',
+    alignContent: 'center',
+    marginTop: -5,
+    height: 27,
+    borderRadius: 14,
+    borderColor: Colors['dark'].primaryDarker,
+    borderWidth: 2,
+    transform: [
+      {translateX: -60},
+      {translateY: 0},
+    ]
+  },
+  reactionEmojiFont: {
+    fontSize: 14,
+    margin: 3,
+    color: Colors['dark'].textLight,
+  }
 });
 
