@@ -17,6 +17,7 @@ import GestureRecognizer, {swipeDirections} from 'react-native-swipe-gestures';
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import ReactionsPanel from '../components/ReactionPanel';
 import AutoComplete from '../components/AutoComplete';
+import oofReact from '../assets/images/oof.png';
 
 
 export default function ChatScreen(props) {
@@ -47,10 +48,12 @@ export default function ChatScreen(props) {
 	React.useEffect(() => {
     const unsubscribeFocus = props.navigation.addListener('focus', () => {
 			AppState.shared.unreadMessages = 0
-      AppState.notificationsEnabled = false
+      AppState.shared.notificationsEnabled = false
+      console.log("DISABLING NOTIFICATIONS")
     });
     const unsubscribeBlur = props.navigation.addListener('blur', () => {
-      AppState.notificationsEnabled = true
+      AppState.shared.notificationsEnabled = true
+      console.log("ENABLING NOTIFICATIONS")
     });
 
     // Return the function to unsubscribe from the event so it gets removed on unmount
@@ -79,7 +82,7 @@ export default function ChatScreen(props) {
     let audio = url
     let reply = null
     if (attachedReply) {
-      reply = attachedReply._id
+      reply = attachedReply.id
     }
     if (audio != null) {
       let message = ObjectFactory.createMessage({
@@ -95,7 +98,7 @@ export default function ChatScreen(props) {
 		let image = url
 		let reply = null
 		if (attachedReply) {
-			reply = attachedReply._id
+			reply = attachedReply.id
 		}
 		if (image != null) {
       let message = ObjectFactory.createMessage( {
@@ -110,7 +113,7 @@ export default function ChatScreen(props) {
 
 	const sendTextMessage = async (messages) => {
 		if (attachedReply) {
-			messages[0].reply = attachedReply._id
+			messages[0].reply = attachedReply.id
 		}
 		attachReply(null)
     messages = MessageParser.parse(messages)
@@ -191,7 +194,7 @@ export default function ChatScreen(props) {
     if(!replyId) return ''
     for (let m in messages) {
       let message = messages[m]
-      if (message._id == replyId) {
+      if (message.id == replyId) {
         let text = message.text
         if (!text) return ''
         if (text.length > 90) {
@@ -206,7 +209,7 @@ export default function ChatScreen(props) {
     if(!replyId) return ''
     for (let m in messages) {
       let message = messages[m]
-      if (message._id == replyId) {
+      if (message.id == replyId) {
         return message.image
       }
     }
@@ -332,8 +335,16 @@ export default function ChatScreen(props) {
     if (props.currentMessage.user._id == getUser()._id) {
       riStyle = styles.reactionsIndicatorRight
     }
+		let oofs = []
+    if (reactionText.includes("oof")) {
+			while(reactionText.includes("oof")) {
+				reactionText = reactionText.replace("oof", "")
+				oofs.push(<Image key={Math.random()} style={styles.oof} source={oofReact}/>)
+			}
+    }
     return (
       <View style={riStyle}>
+				{oofs}
         <Text style={styles.reactionEmojiFont}>{reactionText}</Text>
       </View>
     )
@@ -614,6 +625,7 @@ const styles = StyleSheet.create({
     zIndex: -1,
   },
   diceBubbleLeft: {
+    width: 200,
     alignSelf: 'flex-start',
     justifyContent: 'flex-start',
     backgroundColor: Colors['dark'].accentDark,
@@ -625,6 +637,7 @@ const styles = StyleSheet.create({
     zIndex: -1,
   },
 	replyBubbleRight: {
+    width: 200,
     justifyContent: 'flex-start',
     backgroundColor: Colors['dark'].primary,
     borderTopLeftRadius: 10,
@@ -658,6 +671,7 @@ const styles = StyleSheet.create({
   },
   reactionsIndicatorRight: {
     flex: 0,
+		flexDirection: 'row',
     backgroundColor: Colors['dark'].primary,
     alignSelf: 'flex-end',
     alignContent: 'center',
@@ -670,6 +684,7 @@ const styles = StyleSheet.create({
   },
   reactionsIndicatorLeft: {
     flex: 0,
+		flexDirection: 'row',
     backgroundColor: Colors['dark'].primary,
     alignSelf: 'flex-end',
     alignContent: 'center',
@@ -687,6 +702,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     margin: 3,
     color: Colors['dark'].textLight,
+  },
+	oof: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
   }
 });
 

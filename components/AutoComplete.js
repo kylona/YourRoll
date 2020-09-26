@@ -1,6 +1,5 @@
 import * as React from 'react';
-import {Animated, Platform, Dimensions, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
-import { Text, View } from '../components/Themed';
+import {Text, View, Animated, Platform, Dimensions, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import Recorder from '../util/Recorder';
 import Fire from '../util/Fire';
 import AppState from '../util/AppState';
@@ -47,6 +46,7 @@ export default function AutoComplete(props) {
     if (guess.startsWith("$")) {
       value = AppState.shared.getStat(guess.replace("$",""))
     }
+    if (typeof value == "object") continue
 		guessViews.push(
 			<TouchableOpacity 
 				onPress={() => {

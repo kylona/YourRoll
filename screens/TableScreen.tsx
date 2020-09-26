@@ -9,59 +9,51 @@ import AppState from '../util/AppState';
 import Colors from '../constants/Colors.ts'
 import ImagePicker from '../util/ImagePicker';
 import BlobCache from '../util/BlobCache';
-import Avatar from '../components/Avatar';
-import StatText from '../components/snaps/StatText';
+import TableAdder from '../components/TableAdder';
+import TableItem from '../components/TableItem';
 
 
-export default function ActionScreen(props) {
+export default function TableScreen(props) {
 
-  const numColumns = 6
-  const numRows = 10
-  const navigation = props.navigation
   const [scrollEnabled, setScrollEnabled] = React.useState(true)
-
-  const [update, forceUpdate] = React.useState(false)
-  const [character, setCharacter] = React.useState(AppState.shared.character)
+  const [tables, setTables] = React.useState(AppState.shared.tables.list)
 
   React.useEffect(() => {
-    AppState.shared.addListener((state) => {
-      setCharacter(AppState.shared.character)
-      forceUpdate(!update)
+    let unsubscribe = AppState.shared.addListener(() => {
+      setTables({...AppState.shared.tables.list})
+      
     })
+    return unsubscribe
   }, []);
-  const [editing, setEditing] = React.useState(false)
 
-
+  let tableItems = []
+  tableItems.push(
+    <TableAdder key={"adder"}/>
+  )
+  for (let t in tables) {
+    let table = tables[t]
+    tableItems.push( 
+      <TableItem
+        index={t}
+        name={table.name}
+        onPress={() => {
+          console.log(table)
+          AppState.shared.changeTable(table)
+          props.navigation.pop()
+        }}
+        onLongPress={() => {
+          console.log(props.context) 
+        }}/>
+    )
+  }
   return (
     <View style={styles.container}>
-		<ScrollView style={styles.scroll} contentContainerStyle={styles.contentContainer}
-			scrollEnabled={scrollEnabled}
-		>
-			<SnapGrid 
-				numRows={numRows}
-				numColumns={numColumns}
-				onGrab={() => {setScrollEnabled(false)}}
-				onRelease={() => { setScrollEnabled(true);}}
-        onUpdate={(newItems) => {
-          setItems(newItems)
-        }}
-        editing={editing}
-				onSwipeRight={() => {navigation.jumpTo('Map');Keyboard.dismiss()}}
-				onSwipeLeft={() => {navigation.jumpTo('Chat');Keyboard.dismiss()}}
-        onDoubleTap={() => {setEditing(!editing)}}
-        update={update} //for forced update
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.contentContainer}
         scrollEnabled={scrollEnabled}
-			/>
-		</ScrollView>
-    <TouchableOpacity
-      style={styles.editButton(true)}
-      onPress={() => {
-        setEditing(!editing)
-      }}
-    >
-      <Ionicons name={editing ? 'md-save' : 'md-create' } size={30} color={Colors['dark'].textDark}/>
-    </TouchableOpacity>
-  </View>
+      >
+       {tableItems}
+      </ScrollView>
+    </View>
 	);
 }
 
@@ -70,6 +62,7 @@ const styles = StyleSheet.create({
   container: {
 		width: '100%',
 		height: '100%',
+    paddingBottom: 40,
   },
   scroll: {
 		width: '100%',
@@ -81,17 +74,25 @@ const styles = StyleSheet.create({
     paddingTop: 15,
   },
   snapFront: {
+    flexDirection: 'row',
     width:'100%',
-    height:'100%',
-		justifyContent: 'center',
     backgroundColor:Colors['dark'].accent,
     borderRadius: 15,
+    alignItems: 'center',
+    padding: 5,
+    marginTop: 10,
   },
   snapBack: {
     width:'100%',
     height:'100%',
     backgroundColor:Colors['dark'].accentDark,
     borderRadius: 15,
+  },
+  macroDeleteButton: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
+    marginRight: 5,
   },
 	leftEdge: {
     flex: 0,
@@ -117,11 +118,21 @@ const styles = StyleSheet.create({
     marginTop: 1,
     color: Colors['dark'].textDark
   },
-	labelText: {
+	macroText: {
+    flex: 10,
     fontSize: 20,
-    alignSelf: 'center',
-    marginTop: 1,
+    alignSelf: 'flex-start',
+    margin: 10,
     color: Colors['dark'].textDark
+  },
+  avatar: {
+    flex: 0,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
   },
   editButton: () => {return({
     position: 'absolute',
@@ -132,7 +143,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors['dark'].primaryLight,
+    backgroundColor: Colors['dark'].accent,
     zIndex: 10,
   })},
 });

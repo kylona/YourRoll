@@ -1,11 +1,12 @@
 import * as React from 'react';
-import {Animated, Platform, Dimensions, TouchableOpacity, StyleSheet } from 'react-native';
+import {Animated, Image, Platform, Dimensions, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text, View } from '../components/Themed';
 import Recorder from '../util/Recorder';
 import Fire from '../util/Fire';
 import Colors from '../constants/Colors.ts';
 import { Ionicons } from '@expo/vector-icons';
 import useColorScheme from '../hooks/useColorScheme';
+import oofReact from '../assets/images/oof.png';
 
 export default function ReactionPanel(props) {
   if (props.pos == null) return null
@@ -83,8 +84,8 @@ export default function ReactionPanel(props) {
           <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('😭')}>
             <Text style={styles.reactionEmoji}>😭</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('😡')}>
-            <Text style={styles.reactionEmoji}>😡</Text>
+          <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('oof')}>
+            <Image style={styles.oof} source={oofReact}/>
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('👍')}>
             <Text style={styles.reactionEmoji}>👍</Text>
@@ -140,4 +141,9 @@ const styles = StyleSheet.create({
     marginLeft: 3,
     marginRight: 3,
   },
+  oof: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+  }
 });

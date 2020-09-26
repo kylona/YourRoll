@@ -3,53 +3,23 @@ import {Animated, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text, View } from '../components/Themed';
 import Recorder from '../util/Recorder';
 import Fire from '../util/Fire';
+import ObjectFactory from '../util/ObjectFactory';
 import Colors from '../constants/Colors.ts';
 import { Ionicons } from '@expo/vector-icons';
 import AppState from '../util/AppState';
 
-export default function MacroAdder(props) {
+export default function TableItem(props) {
 
-	const [name, setName] = React.useState('')
-	const [value, setValue] = React.useState('')
-
-
+  let t = props.index
   return (
-    <View style={styles.container}>
-      <View style={styles.inputBox}>
-        <TextInput
-          //defaultValue={}
-          placeholder={"Macro Name..."}
-          placeholderTextColor={Colors['dark'].textLight}
-          style={styles.inputText}
-          onChangeText={(text) => {
-						setName(text.toLowerCase())					
-          }}
-        />
-      </View>
-      <View style={styles.inputBox}>
-        <TextInput
-          //defaultValue={AppState.shared.character.name}
-          placeholder={"Macro Value..."}
-          placeholderTextColor={Colors['dark'].textLight}
-          style={styles.inputText}
-          onChangeText={(text) => {
-						setValue(text)					
-          }}
-        />
-      </View>
-			<TouchableOpacity
-				style={styles.macroAddButton}
-				onPress={ () => {
-					if (name != '' && value != '') {
-            let cleanName = name.replace("#", "").replace(" ", "").trim()
-						AppState.shared.macros[cleanName] = value
-						AppState.shared.saveState()
-					}
-				}}
-			>
-        <Ionicons name='md-add-circle' size={60} color={Colors['dark'].textLight}/>
-      </TouchableOpacity>
-    </View>
+     <TouchableOpacity
+         key={t}
+         style={styles.tableContainer}
+         onPress={props.onPress}
+         onLongPress={props.onLongPress}
+     >
+      <Text style={styles.inputText}>{props.name}</Text>
+     </TouchableOpacity>
   );
 }
 
@@ -57,13 +27,30 @@ export default function MacroAdder(props) {
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    height: 250,
+    height: 200,
     alignItems: 'center',
     backgroundColor: Colors['dark'].primary,
     borderRadius: 20,
     padding: 10,
   },
-	macroAddButton: {
+	tableAddButton: {
+    flex: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 15,
+    borderRadius: 40,
+    backgroundColor: Colors['dark'].accent
+  },
+	tableContainer: {
+    flexDirection: 'row',
+    width:'100%',
+    backgroundColor:Colors['dark'].primaryLight,
+    borderRadius: 15,
+    alignItems: 'center',
+    padding: 5,
+    marginTop: 10,
+  },
+  macroDeleteButton: {
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'flex-end',
@@ -73,9 +60,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: Colors['dark'].textDark,
-    padding: 10,
-    margin: 5,
-    marginLeft: 20,
+    margin: 15,
   },
   inputBox: {
     width: '100%',
@@ -98,9 +83,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 20,
+    fontSize: 25,
     fontWeight: 'bold',
-    color: Colors['dark'].textDark,
+    color: Colors['dark'].textLight,
   },
   separator: {
     marginVertical: 30,

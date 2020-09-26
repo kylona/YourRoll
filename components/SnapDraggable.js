@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import { StyleSheet, View, Text, PanResponder, Animated } from "react-native";
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { StyleSheet, TouchableOpacity, View, Text, PanResponder, Animated } from "react-native";
+//import { TouchableOpacity } from 'react-native-gesture-handler';
 import Colors from '../constants/Colors';
 
 export default function SnapDraggable(props) {
@@ -11,18 +11,51 @@ export default function SnapDraggable(props) {
     const [size, setSize] = React.useState(props.size || {x: 1, y:1})
     const [draggable, setDraggable] = React.useState(false)
     const [lastPress, setLastPress] = React.useState(0)
-    const [flipped, setFilipped] = React.useState(props.flipped || false)
+    const [flipped, setFlipped] = React.useState(props.flipped)
+
+    pan.setOffset({x: 100, y:100})
+
+    React.useEffect(() => {
+      grow.setValue({x: props.height/2, y: 0})
+    },[])
+
+    React.useEffect(() => {
+        Animated.timing(grow, {
+          toValue: {x: props.height/2, y: 0},
+          duration: 100,
+          useNativeDriver: false
+        }).start(
+        () => {
+        setFlipped(props.flipped)
+        Animated.timing(grow, {
+          toValue: {x: 0, y: props.height},
+          duration: 100,
+          useNativeDriver: false
+        }).start();
+        }
+        );
+    },[props.flipped])
+
 
 
     let val = props.pos
     // Add a listener for the delta value change
     pan.addListener((value) => val = value);
-    pan.setOffset({
-      x: pos.x,
-      y: pos.y
-    })
+    if (props.offset) {
+      pan.setOffset({
+        x: props.offset.x,
+        y: props.offset.y,
+      })
+    }
+    else {
+      pan.setOffset({
+        x: pos.x,
+        y: pos.y
+      })
+    }
     // Initialize PanResponder with move handling
-    const panResponder = PanResponder.create({
+    const panResponder = React.useMemo(() => {
+      return PanResponder.create({
       onStartShouldSetPanResponder: (e, gesture) => {
 				return (draggable)
 			},
@@ -36,34 +69,44 @@ export default function SnapDraggable(props) {
         })
 			},
       onPanResponderMove: (e, gesture) => {
-        if (props.onMove) props.onMove(snapObject(), val.x, val.y)
+        let pageX = gesture.moveX 
+        let pageY = gesture.moveY
+        if (props.onMove) {
+          props.onMove(snapObject(), val.x, val.y, pageX, pageY)
+        }
         Animated.event(
           [false, { dx: pan.x, dy: pan.y }],
           {useNativeDriver: false})(e, gesture)
       },
 			onPanResponderReject: (e, gesture) => {
+        let pageX = gesture.moveX 
+        let pageY = gesture.moveY
+				if (props.onRelease) props.onRelease(snapObject(), val.x, val.y, pageX, pageY)
         setDraggable(false)
-				if (props.onRelease) props.onRelease(snapObject(), val.x, val.y)
 			},
 			onPanResponderRelease: (e, gesture) => {
+        let pageX = gesture.moveX 
+        let pageY = gesture.moveY
+				if (props.onRelease) props.onRelease(snapObject(), val.x, val.y, pageX, pageY)
         setDraggable(false)
-				if (props.onRelease) props.onRelease(snapObject(), val.x, val.y)
       },
       onPanResponderTerminate: (evt, gesture) => {
+        let pageX = gesture.moveX 
+        let pageY = gesture.moveY
+				if (props.onRelease) props.onRelease(snapObject(), val.x, val.y, pageX, pageY)
         setDraggable(false)
-				if (props.onRelease) props.onRelease(snapObject(), val.x, val.y)
       },
-    });
+    })}, [draggable]);
 
-	const snapToPos = (newPos) => {
+	const snapToPos = (newPos, callback) => {
         setPos(newPos)
 				pan.setOffset({x: newPos.x, y: newPos.y})
 				pan.setValue({x: val.x - newPos.x, y: val.y - newPos.y})
-        Animated.spring(pan, {
+        Animated.timing(pan, {
           toValue: {x: 0, y: 0},
-          friction: 5,
+          duration: 200,
           useNativeDriver: false
-        }).start();
+        }).start(callback);
 	}
 
   const snapObject = () => {
@@ -76,16 +119,18 @@ export default function SnapDraggable(props) {
       snapToPos: snapToPos,
       setGrid: setGrid,
       id: props.id,
+      snapToPos: snapToPos,
     }
   }
 
   const panStyle = {
-    position: 'absolute',
     width: props.width,
-    height: props.height,
+    height: grow.y,
+    marginTop: grow.x,
     padding: draggable ? 0 : 5,
     borderWidth: props.selected ? 2 : 0,
     borderColor: Colors['dark'].accent,
+    position: 'absolute',
     transform: [
     {
       translateX: pan.x
@@ -95,11 +140,18 @@ export default function SnapDraggable(props) {
     },
     ]
   }
-  let frontView = props.renderFront()
-  let backView = props.renderFront()
-  let view = flipped ? frontView : backView
-  let handle = props.editing ? null : (
-    <TouchableOpacity activeOpacity={0} style={styles.handle}
+  const grabOnLongPress = () => {
+    if (props.onGrab) props.onGrab(snapObject(), pos.x, pos.y)
+    setDraggable(true)
+  }
+  const onLetGo = () => {
+    setDraggable(false)
+  }
+  let frontView = props.renderFront(grabOnLongPress, onLetGo)
+  let backView = props.renderBack(grabOnLongPress, onLetGo)
+  let view = flipped ? backView : frontView 
+  let handle = (
+    <TouchableOpacity activeOpacity={1} style={styles.handle}
       onPress={() => {
         var delta = new Date().getTime() - lastPress;
         if (lastPress == 0) {
@@ -119,16 +171,14 @@ export default function SnapDraggable(props) {
         }
       }}
       delayLongPress={50}
-      onPressOut={() => setDraggable(false)}
-      onLongPress={() => {
-        if (true) { //TODO edit mode
-          if (props.onGrab) props.onGrab(snapObject(), pos.x, pos.y)
-            setDraggable(true)
-        }
-      }}
+      //onPressOut={onLetGo}
+      onLongPress={grabOnLongPress}
     >
+      {view}
     </TouchableOpacity>
   )
+
+
 
   return (
     <Animated.View
@@ -136,9 +186,6 @@ export default function SnapDraggable(props) {
       useNativeDriver={true}
       style={[panStyle]}
       >
-        <View style={styles.contentBox}>
-          {view}
-        </View>
         {handle}
     </Animated.View>
   );

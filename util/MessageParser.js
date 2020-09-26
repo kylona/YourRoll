@@ -148,6 +148,7 @@ export default class MessageParser {
       if (macro.startsWith(parCom.slice(1, parCom.length))) guesses.push("#" + macro)
     }
     for (let stat in AppState.shared.character) {
+      console.log(stat)
       if (stat.startsWith(parCom.slice(1, parCom.length))) guesses.push("$" + stat)
     }
     return guesses

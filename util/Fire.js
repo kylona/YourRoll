@@ -1,11 +1,11 @@
 import firebase from 'firebase'; // 4.8.1
 import 'firebase/storage';
 
-
 class Fire {
   constructor() {
     this.loaded = false
     this.init()
+    this.tableId = null
   }
 
   init = () => {
@@ -53,20 +53,24 @@ class Fire {
     return (firebase.auth().currentUser || {}).uid;
   }
 
+  get tableName() {
+    return this.database.ref(Fire.shared.tableId).child('name');
+  }
+
   get messages() {
-    return this.database.ref('messages');
+    return this.database.ref(Fire.shared.tableId).child('messages');
   }
 
   get maps() {
-    return this.database.ref('maps');
+    return this.database.ref(Fire.shared.tableId).child('maps');
   }
 
   get tokens() {
-    return this.database.ref('tokens');
+    return this.database.ref(Fire.shared.tableId).child('tokens');
   }
 
   get users() {
-    return this.database.ref('users');
+    return this.database.ref(Fire.shared.tableId).child('users');
   }
 
   parseMessage(snapshot) {
@@ -138,9 +142,15 @@ class Fire {
     this.users.on('child_removed', snapshot => callback(snapshot.val()));
   }
 
+  onTableNameChanged = callback => {
+    console.log("SETTING TABLE NAME LISTENER")
+    this.tableName.on('value', snapshot => callback(snapshot.val()))
+  }
+
 
   // send the message to the Backend
   sendMessages = messages => {
+    console.log("Table id is: " + Fire.shared.tableId)
     for (let m in messages) {
       this.messages.child(messages[m].id).set(messages[m])
     }
@@ -200,6 +210,14 @@ class Fire {
   }
 
   // close the connection to the Backend
+  offEverything = () => {
+    if (!this.tableId) return
+    this.messages.off();
+    this.maps.off();
+    this.tokens.off();
+    this.users.off();
+    this.tableName.off();
+  }
   offMessages = () => {
     this.messages.off();
   }

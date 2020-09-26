@@ -5,6 +5,7 @@ import { ColorSchemeName } from 'react-native';
 import { TouchableOpacity, RefreshControl, Keyboard, StyleSheet, Text, TextInput, View, Image, AsyncStorage, Linking } from 'react-native';
 import NotFoundScreen from '../screens/NotFoundScreen';
 import MacroScreen from '../screens/MacroScreen';
+import TableScreen from '../screens/TableScreen';
 import CharacterSheetScreen from '../screens/CharacterSheetScreen';
 import { RootStackParamList } from '../types';
 import BottomTabNavigator from './BottomTabNavigator';
@@ -58,13 +59,15 @@ function RootNavigator() {
           },
           headerLeft: () => {
             let currentScreen = route.name
-            if (route.name == 'Root') {
-              currentScreen = 'Character'
-              if (route.state) {
-                currentScreen = route.state.routeNames[route.state.index]
-              }
-            }
-            if (route.name == 'Root') return null
+            if (route.name == 'Root') return (
+              <HeaderRight
+                onPress={() => {
+                  navigation.push("TableScreen")
+                }}
+              >
+                <Ionicons name='ios-arrow-back' size={30} color={Colors['dark'].textLight}/>
+              </HeaderRight>
+            )
             else return (
               <HeaderRight
                 onPress={() => {
@@ -114,7 +117,7 @@ function RootNavigator() {
         })}
     >
       <Stack.Screen name="Root" component={BottomTabNavigator} />
-      <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
+      <Stack.Screen name="TableScreen" component={TableScreen} />
       <Stack.Screen name="MacroScreen" component={MacroScreen} />
       <Stack.Screen name="CharacterSheetScreen" component={CharacterSheetScreen} />
     </Stack.Navigator>

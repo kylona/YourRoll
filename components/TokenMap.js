@@ -2,12 +2,27 @@ import React from 'react'
 import {Platform, Dimensions, View, Image, StyleSheet, } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import ReactNativeZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView'
+import AppState from '../util/AppState';
 import Token from './Token';
 import TokenControls from '../components/TokenControls.js';
 import Colors from '../constants/Colors.ts';
 
 export default function TokenMap(props) {
-  let { tokens, mapImage, gridScale, onTokenUpdate } = props
+  let {gridScale, onTokenUpdate } = props
+
+  const [tokens, setTokens] = React.useState(AppState.shared.tokens)
+  const [mapImage, setMap] = React.useState(AppState.shared.map)
+
+  React.useEffect(() => {
+    let unsubscribe = AppState.shared.addListener(() => {
+      setMap(AppState.shared.map)
+      setTokens([...AppState.shared.tokens])
+    })
+    return unsubscribe
+  }, []);
+
+
+
   const [selectedName, setSelectedName] = React.useState(null)
   const [zoomLevel, setZoomLevel] = React.useState(1.3)
   const tokenViews = tokens.map(token => {

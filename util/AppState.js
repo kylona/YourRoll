@@ -4,6 +4,7 @@ import { AsyncStorage} from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Crypto from 'expo-crypto';
 import Fire from '../util/Fire';
+import ObjectFactory from '../util/ObjectFactory';
 import BlobCache from '../util/BlobCache';
 import {evaluate} from 'mathjs';
 import defaultPlayerAvatar from '../assets/images/defaultCharacter.png'
@@ -15,10 +16,27 @@ import { GiftedChat } from '../components/ChatUI';
 class AppState {
 
   constructor() {
-		this.notificationTokens = []
-    this.notificationsEnabled = true
-    this._unreadMessages = 0
-    this.macros = {
+    this.listeners = {}
+    let newTable = ObjectFactory.createTable() 
+    this.tables = {
+      active: newTable,
+      list: [newTable]
+    }
+    this.player = {
+      name: 'Unnamed Player',
+      avatar: Image.resolveAssetSource(defaultPlayerAvatar).uri,
+      id: Fire.shared.uid
+    }
+    this.setTableDefaults(this, this.tables.active.id)
+  }
+
+  setTableDefaults(appState, tableId) {
+    appState[tableId] = {}
+    appState[tableId].notificationTokens = {},
+    appState[tableId].tokens = [],
+    appState[tableId].map = undefined,
+    appState[tableId].unreadMessages = 0
+    appState[tableId].macros = {
       strsave: 'Str Save: 1d20 + $dexsave',
       dexsave: 'Dex Save: 1d20 + $dexsave',
       consave: 'Con Save: 1d20 + $consave',
@@ -44,13 +62,8 @@ class AppState {
       performance: 'performance: 1d20 + $chamod',
       persuasion: 'persuasion: 1d20 + $chamod',
     }
-    this.player = {
-      name: 'Unnamed Player',
-      avatar: Image.resolveAssetSource(defaultPlayerAvatar).uri,
-      id: Fire.shared.uid
-    }
-		this.messages = []
-    this.character = {
+    appState[tableId].messages = []
+    appState[tableId].character = {
       name: "Unnamed",
       avatar: 'https://firebasestorage.googleapis.com/v0/b/nova-rpg.appspot.com/o/uploads%2FToken_becs7qhdx.jpeg?alt=media&token=e0fb9238-e8c5-4a9b-b611-9fdf776f6b91',
       level: '8',
@@ -110,65 +123,117 @@ class AppState {
         'wismod = floor(wisdom/2)-5',
         'chamod = floor(charisma/2)-5',
         'prof = 2+floor((level-1)/4)',
-      ]
+      ],
+      actionLayout: ObjectFactory.createActionLayout(),
     }
-    BlobCache.shared.get(this.character.avatar).then((res) => {
-      this.character.cachedAvatar = res
+    BlobCache.shared.get(appState[tableId].character.avatar).then((res) => {
+      appState[tableId].character.cachedAvatar = res
     })
-    BlobCache.shared.get(this.player.avatar).then((res) => {
-      this.player.cachedAvatar = res
-    })
-    this.listeners = {}
   }
 
 
-  onMessage(message) {	
-		const cacheImages = async () => {
-			if (message.user.avatar && message.user.avatar != null) {
-				message.user.avatar = await BlobCache.shared.get(message.user.avatar)
-			}
-			if (message.image && message.image != null) {
-				message.image = await BlobCache.shared.get(message.image)
-			}
-			if (message.audio && message.image != null) {
-				message.audio = await BlobCache.shared.get(message.audio)
-			}
-		}
-		cacheImages().then(() => {
-			let index = AppState.shared.messages.findIndex((e) => {
-				return e.id == message.id
-			})
-			if (index != -1) return
+  get notificationTokens() {
+    return AppState.shared[AppState.shared.tables.active.id].notificationTokens
+  }
+  set notificationTokens(value) {
+    AppState.shared[AppState.shared.tables.active.id].notificationTokens = value
+  }
+
+  get unreadMessages() {
+    return AppState.shared[AppState.shared.tables.active.id].unreadMessages
+  }
+  set unreadMessages(value) {
+    AppState.shared[AppState.shared.tables.active.id].unreadMessages = value
+  }
+
+  get macros() {
+    return AppState.shared[AppState.shared.tables.active.id].macros
+  }
+  set macros(value) {
+    AppState.shared[AppState.shared.tables.active.id].macros = value
+  }
+
+  get messages() {
+    return AppState.shared[AppState.shared.tables.active.id].messages
+  }
+  set messages(value) {
+    AppState.shared[AppState.shared.tables.active.id].messages = value
+  }
+
+  get character() {
+    return AppState.shared[AppState.shared.tables.active.id].character
+  }
+  set character(value) {
+    AppState.shared[AppState.shared.tables.active.id].character = value
+  }
+
+  get map() {
+    return AppState.shared[AppState.shared.tables.active.id].map
+  }
+  set map(value) {
+    AppState.shared[AppState.shared.tables.active.id].map = value
+  }
+
+  get tokens() {
+    return AppState.shared[AppState.shared.tables.active.id].tokens
+  }
+  set tokens(value) {
+    AppState.shared[AppState.shared.tables.active.id].tokens = value
+  }
+
+  onMessage(message) {  
+    const cacheImages = async () => {
+      if (message.user.avatar && message.user.avatar != null) {
+        message.user.avatar = await BlobCache.shared.get(message.user.avatar)
+      }
+      if (message.image && message.image != null) {
+        message.image = await BlobCache.shared.get(message.image)
+      }
+      if (message.audio && message.image != null) {
+        message.audio = await BlobCache.shared.get(message.audio)
+      }
+    }
+    cacheImages().then(() => {
+      let index = AppState.shared.messages.findIndex((e) => {
+        return e.id == message.id
+      })
+      if (index != -1) return
       if (message.user._id != Fire.shared.uid) {
         if (AppState.shared.notificationsEnabled) {
           AppState.shared.unreadMessages += 1
         }
       }
-			AppState.shared.messages = GiftedChat.insert(AppState.shared.messages, message, 'timestamp')
-			AppState.shared.saveState()
-		}
-		)
+      AppState.shared.messages = GiftedChat.insert(AppState.shared.messages, message, 'timestamp')
+      AppState.shared.saveState()
+    }
+    )
   }
 
   onMessageDelete(message) {
-			let index = AppState.shared.messages.findIndex((e) => {
-				return e.id == message.id
-			})
-			if (index == -1) return
+      let index = AppState.shared.messages.findIndex((e) => {
+        return e.id == message.id
+      })
+      if (index == -1) return
       AppState.shared.messages.splice(index, 1)
-			AppState.shared.saveState()
+      AppState.shared.saveState()
   }
 
 
   onMessageUpdate(message) {
-			let index = AppState.shared.messages.findIndex((e) => {
-				return e.id == message.id
-			})
-			if (index == -1) return
+      let index = AppState.shared.messages.findIndex((e) => {
+        return e.id == message.id
+      })
+      if (index == -1) return
       AppState.shared.messages[index]._id = message._id
       AppState.shared.messages[index].text = message.text
       AppState.shared.messages[index].reactions = message.reactions
-			AppState.shared.saveState()
+      AppState.shared.saveState()
+  }
+
+  onTableNameChange(name) {
+    if (name == null) return
+    AppState.shared.tables.active.name = name
+    AppState.shared.saveState()
   }
 
   updateMessage(message) {
@@ -184,6 +249,7 @@ class AppState {
     */
     Fire.shared.sendMessages(messages) 
     for (let m in messages) {
+      console.log("Sending Message")
       let message = messages[m]
       for (let t in AppState.shared.notificationTokens) {
         let title = message.user.name
@@ -193,17 +259,66 @@ class AppState {
           if (message.audio) body = "Sent an audio recording."
         }
         Fire.shared.pushNotification(AppState.shared.notificationTokens[t], title, body)
+        console.log("Pushing Notification" + t)
       }
     }
   }
 
   async loadEarlierMessages() {
-		let earliestMessage = AppState.shared.messages[0]
-		for (let m in AppState.shared.messages) {
-			earliestMessage = AppState.shared.messages[m].timestamp < earliestMessage.timestamp ? AppState.shared.messages[m] : earliestMessage
-		}
-		await Fire.shared.loadEarlierMessages(earliestMessage, AppState.shared.onMessage)
+    let earliestMessage = AppState.shared.messages[0]
+    for (let m in AppState.shared.messages) {
+      earliestMessage = AppState.shared.messages[m].timestamp < earliestMessage.timestamp ? AppState.shared.messages[m] : earliestMessage
+    }
+    await Fire.shared.loadEarlierMessages(earliestMessage, AppState.shared.onMessage)
   }
+
+
+    onMap = (map) => {
+      if (map == 'null') {
+        BlobCache.shared.get('https://i.imgur.com/cHLywwH.jpg').then((res) => {
+          AppState.shared.map = res 
+          AppState.shared.saveState()
+        })
+      }
+      else {
+        BlobCache.shared.get(map).then((res) => {
+          AppState.shared.map = res 
+          AppState.shared.saveState()
+        })
+      }
+    }
+
+    onTokenAdded = (token) => {
+      let tIndex = AppState.shared.tokens.findIndex((item) => {return item.name == token.name})
+      if (tIndex > -1) {
+        AppState.shared.tokens[tIndex].x = token.x
+        AppState.shared.tokens[tIndex].y = token.y
+      }
+      else {
+        AppState.shared.tokens.push(token)
+      }
+      AppState.shared.saveState()
+    }
+
+    onTokenChanged = (token) => {
+      let tIndex = AppState.shared.tokens.findIndex((item) => {return item.name == token.name})
+      if (tIndex > -1) {
+        AppState.shared.tokens[tIndex].x = token.x
+        AppState.shared.tokens[tIndex].y = token.y
+      }
+      else {
+        AppState.shared.tokens.push(token)
+      }
+      AppState.shared.saveState()
+    }
+
+    onTokenRemoved = (token) => {
+      let tIndex = AppState.shared.tokens.findIndex((item) => {return item.name == token.name})
+      if (tIndex > -1) {
+        AppState.shared.tokens.splice(tIndex, 1)
+      }
+      AppState.shared.saveState()
+    }
 
   get unreadMessages() {
     return AppState.shared._unreadMessages
@@ -224,78 +339,79 @@ class AppState {
 
 
 
-	async registerForPushNotificationsAsync() {
-		let token;
-		if (Constants.isDevice) {
-			const { status: existingStatus } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
-			let finalStatus = existingStatus;
-			if (existingStatus !== 'granted') {
-				const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
-				finalStatus = status;
-			}
-			if (finalStatus !== 'granted') {
-				alert('Failed to get push token for push notification!');
-				return;
-			}
-			token = (await Notifications.getExpoPushTokenAsync()).data;
-		} else {
-			alert('Must use physical device for Push Notifications');
-		}
+  async registerForPushNotificationsAsync() {
+    let token;
+    if (Constants.isDevice) {
+      const { status: existingStatus } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+        const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+        finalStatus = status;
+      }
+      if (finalStatus !== 'granted') {
+        alert('Failed to get push token for push notification!');
+        return;
+      }
+      token = (await Notifications.getExpoPushTokenAsync()).data;
+    } else {
+      alert('Must use physical device for Push Notifications');
+    }
 
-		if (Platform.OS === 'android') {
-			Notifications.setNotificationChannelAsync('default', {
-				name: 'default',
-				importance: Notifications.AndroidImportance.MAX,
-				vibrationPattern: [0, 250, 250, 250],
-				lightColor: '#FF231F7C',
-			});
-		}
-		return token;
-	}
+    if (Platform.OS === 'android') {
+      Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
+    }
+    return token;
+  }
 
   addUser(user) {
-    AppState.shared.notificationTokens.push("ExponentPushToken[" + user.id + "]") 
+    AppState.shared.notificationTokens[user.id] = "ExponentPushToken[" + user.id + "]"
   }
 
   async init() {
-		try {
-      Fire.shared.onUserAdded(AppState.shared.addUser)
-      Fire.shared.onMessageReceived(AppState.shared.onMessage)
-      Fire.shared.onMessageUpdated(AppState.shared.onMessageUpdate)
-      Fire.shared.onMessageDeleted(AppState.shared.onMessageDelete)
-		}
-		catch (e) {
-      console.log("Server Error:" + e)
-		}
     try {
       const jsonValue = await AsyncStorage.getItem('YourRollState')
       if (jsonValue != null) {
         const state = JSON.parse(jsonValue)
-        if (state.version != '0.04') {
+        if (state.version != '0.07') {
           AsyncStorage.clear()
-          let notificationToken = await AppState.shared.registerForPushNotificationsAsync()
-          let user = {
-            id: notificationToken.replace("ExponentPushToken", "").replace("[","").replace("]",""),
-          }
-          Fire.shared.addUser(user)
           return
-        }
-        if (state.macros) {
-          AppState.shared.macros = state.macros
-        }
-				if (state.messages) {
-					AppState.shared.messages = state.messages
-				}
-        if (state.character) {
-          AppState.shared.character = {...AppState.shared.character, ...state.character}
-          if (AppState.shared.character.avatar) {
-            BlobCache.shared.get(AppState.shared.character.avatar).then((res) => {
-              AppState.shared.character.cachedAvatar = res
-            })
-          }
         }
         if (state.player) {
           AppState.shared.player = state.player
+        }
+        if (state.tables) {
+          AppState.shared.tables = state.tables
+          for (table of state.tables.list) {
+            if (!state.hasOwnProperty(table.id)) {
+              AppState.shared.setTableDefaults(AppState.shared, table.id)
+            }
+            else {
+              AppState.shared[table.id] = {}
+              if (state[table.id].macros) {
+                AppState.shared[table.id].macros = state[table.id].macros
+              }
+              if (state[table.id].character) {
+                AppState.shared[table.id].character = state[table.id].character
+              }
+              if (state[table.id].messages) {
+                AppState.shared[table.id].messages = state[table.id].messages
+              }
+              if (state[table.id].map) {
+                AppState.shared[table.id].map = state[table.id].map
+              }
+              if (state[table.id].tokens) {
+                AppState.shared[table.id].tokens = state[table.id].tokens
+              }
+              if (state[table.id].notificationTokens) {
+                AppState.shared[table.id].notificationTokens = state[table.id].notificationTokens
+              }
+            }
+          }
         }
       }
       else {
@@ -311,6 +427,21 @@ class AppState {
     catch(e) {
       console.log("Loading Error:" + e)
     }
+    try {
+      Fire.shared.tableId = AppState.shared.tables.active.id
+      Fire.shared.onUserAdded(AppState.shared.addUser)
+      Fire.shared.onMessageReceived(AppState.shared.onMessage)
+      Fire.shared.onMessageUpdated(AppState.shared.onMessageUpdate)
+      Fire.shared.onMessageDeleted(AppState.shared.onMessageDelete)
+      Fire.shared.onTableNameChanged(AppState.shared.onTableNameChange)
+      Fire.shared.onMap(AppState.shared.onMap)
+      Fire.shared.onTokenAdded(AppState.shared.onTokenAdded)
+      Fire.shared.onTokenChanged(AppState.shared.onTokenChanged)
+      Fire.shared.onTokenRemoved(AppState.shared.onTokenRemoved)
+    }
+    catch (e) {
+      console.log("Server Error:" + e)
+    }
   }
 
   async saveState() {
@@ -319,13 +450,22 @@ class AppState {
     if (updateId) {
       AppState.shared.player._id = updateId
     }
-    let truncatedMessages = AppState.shared.messages.slice(0, 50)
-    const state = {
-      macros: AppState.shared.macros,
-      character: AppState.shared.character,
-			messages: truncatedMessages,
-      version: '0.04',
+    let state = {
+      tables: AppState.shared.tables,
+      version: '0.07',
       player: AppState.shared.player,
+    }
+    for (table of AppState.shared.tables.list) {
+      let truncatedMessages = AppState.shared[table.id].messages.slice(0, 50)
+      const tableState = {
+        macros: AppState.shared[table.id].macros,
+        character: AppState.shared[table.id].character,
+        messages: truncatedMessages,
+        map: AppState.shared[table.id].map,
+        tokens: AppState.shared[table.id].tokens,
+        notificationTokens: AppState.shared[table.id].notificationTokens,
+      }
+      state[table.id] = tableState
     }
     for (let c in AppState.shared.listeners) {
       AppState.shared.listeners[c](state)
@@ -339,8 +479,26 @@ class AppState {
     }
   }
 
+  changeTable(table) {
+    AppState.shared.tables.active = table
+    if (!AppState.shared.hasOwnProperty(table.id)) {
+      AppState.shared.setTableDefaults(AppState.shared, table.id)
+    }
+    Fire.shared.offEverything()
+    Fire.shared.tableId = table.id
+    Fire.shared.onUserAdded(AppState.shared.addUser)
+    Fire.shared.onMessageReceived(AppState.shared.onMessage)
+    Fire.shared.onMessageUpdated(AppState.shared.onMessageUpdate)
+    Fire.shared.onMessageDeleted(AppState.shared.onMessageDelete)
+    Fire.shared.onTableNameChanged(AppState.shared.onTableNameChange)
+    Fire.shared.onMap(AppState.shared.onMap)
+    Fire.shared.onTokenAdded(AppState.shared.onTokenAdded)
+    Fire.shared.onTokenChanged(AppState.shared.onTokenChanged)
+    Fire.shared.onTokenRemoved(AppState.shared.onTokenRemoved)
+    AppState.shared.saveState()
+  }
+
   recalculateStats(character) {
-    //console.log("Recalculating stats")
     for (let calc in character.statCalculations) {
       evaluate(character.statCalculations[calc], character)
     }

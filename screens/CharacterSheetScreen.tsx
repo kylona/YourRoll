@@ -34,6 +34,25 @@ export default function CharacterSheetScreen(props) {
        <View style={styles.snapFront}>
        <Text style={{fontSize:30}}>This is the Character Sheet Screen</Text> 
        </View>
+       <TouchableOpacity style={{...styles.snapFront, marginTop: 10}}
+        onPress={async () => {
+					let notificationToken = await AppState.shared.registerForPushNotificationsAsync()
+          let user = {
+            id: notificationToken.replace("ExponentPushToken", "").replace("[","").replace("]",""),
+          }
+          Fire.shared.addUser(user)
+        }}
+        >
+        <Text style={{fontSize:30}}>Push this to register for notifications</Text> 
+        </TouchableOpacity>
+       <TouchableOpacity style={{...styles.snapFront, marginTop: 10}}
+        onPress={async () => {
+          AsyncStorage.clear()
+        }}
+        >
+        <Text style={{fontSize:30}}>Push this to wipe saved data</Text> 
+        </TouchableOpacity>
+
       </ScrollView>
     </View>
 	);

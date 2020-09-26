@@ -1,7 +1,13 @@
 import React, { Component } from "react";
-import { StyleSheet, View, PanResponder, Animated, Dimensions, Text, } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet, ScrollView, View, PanResponder, Animated, Dimensions, Text, } from "react-native";
 import GestureRecognizer, {swipeDirections} from 'react-native-swipe-gestures';
 import SnapDraggable from '../components/SnapDraggable.js';
+import StatText from '../components/snaps/StatText';
+import SnapAvatar from '../components/snaps/SnapAvatar';
+import AppState from '../util/AppState';
+import SnapAdder from '../components/SnapAdder';
+import Colors from '../constants/Colors';
 
 export default function SnapGrid(props) {
     const extraVisibleRows = 4
@@ -10,304 +16,17 @@ export default function SnapGrid(props) {
     const emptySquare = {empty: true}
     const snapObjs = []
     const screenSlide = new Animated.Value((props.numRows+extraVisibleRows)*rowHeight)
-    const [snapGrid, setSnapGrid] = React.useState({})
-    const [waitingGrid, setWaitingGrid] = React.useState()
+    const [actionLayout, setActionLayout] = React.useState(AppState.shared.character.actionLayout)
+    const [shouldDelete, setShouldDelete] = React.useState(false)
+    let waitingGrid = null
     const [numRows, setNumRows] = React.useState(props.numRows)
     const [screenHeight, setScreenHeight] = React.useState((props.numRows+extraVisibleRows)*rowHeight)
-    const [snappers, setSnappers] = React.useState([])
-
     React.useEffect(() => {
-      let newSnappers = []
-      for (let i in props.items) {
-        let item = props.items[i]
-        let snap = (
-          <SnapDraggable
-            key={Math.random()}
-            pos={gridToPos(item.grid)}
-            grid={item.grid}
-            size={item.size}
-            flipped={false}
-            onGrab={(g, x, y) => {preOnGrab(g, x, y)}}
-            onMove={(m, x, y) => {preOnMove(m, x, y)}}
-            onRelease={(r, x, y) => {preOnRelease(r, x, y)}}
-            width={colWidth*item.size.x}
-            height={rowHeight*item.size.y}
-            onDoubleTap={(tapped, x, y) => {onDoubleTap(tapped, x, y)}}
-            onTap={item.onTap}
-            renderFront={item.renderFront}
-            renderBack={item.renderBack}
-            editing={props.editing}
-            id={i}
-          />
-          )
-        let footprint = getFootprint(item, item.grid)
-        for (let f in footprint) {
-          snapGrid[footprint[f].x][footprint[f].y] = {empty: false, id: newSnappers.length}
-        }
-        newSnappers.push(snap)
-      }
-      setSnappers(newSnappers)
-    }, [props.editing, props.update]);
-
-
-    const getSquare = (grid) => {
-      if (!snapGrid.hasOwnProperty(grid.x)) {
-        return undefined
-      }
-      if (!snapGrid[grid.x].hasOwnProperty(grid.y)){
-        return undefined
-      }
-      return snapGrid[grid.x][grid.y]
-    }
-
-    const getSnap = (grid) => {
-      let square = getSquare(grid)
-      if(square != undefined && !square.empty) {
-        if (!snapRefs[square.id]) {
-          console.log("SQUARE:")
-          console.log(square)
-          console.log(square.id)
-        }
-        else {
-          return snapRefs[square.id].current
-        }
-      }
-      else {
-        return undefined
-      }
-    }
-
-    const grabSnap = (snap) => {
-      updateSnapGrid(snap.grid, snap, true)
-    }
-
-    const placeSnap = (snap, grid) => {
-      if (!snapGrid.hasOwnProperty(grid.x)) snapGrid[grid.x] = {}
-      updateSnapGrid(grid, snap, false)
-      animatePlace(snap, grid)
-    }
-
-    const animatePlace = (snap, grid) => {
-      let pos = gridToPos(grid)
-      snap.snapToPos(pos)
-    }
-
-    const onTap = (tapped, x, y) => {
-
-    }
-
-    const onDoubleTap = (tapped, x, y) => {
-      //setFlipped(!tapped.flipped)
-      //tapped.setState({flipped: !tapped.flipped})
-    }
-
-
-    const preOnGrab = (grabbed, x, y) => {
-      if (props.onGrab) props.onGrab()
-      grabSnap(grabbed)
-    }
-
-    const preOnMove = (moved, x, y) => {
-      if (props.onMove) props.onMove()
-      let grid = overlapingGrid({x: x, y: y})
-      if (waitingGrid && grid != waitingGrid) {
-        setWaitingGrid(undefined)
-      }
-      if (shouldMovePosition(moved, grid)) {
-        if (!waitingGrid) {
-          setWaitingGrid(grid)
-          setTimeout( () => {
-            if (waitingGrid && waitingGrid == grid) {
-              moveSnap(moved, grid)
-              setWaitingGrid(undefined)
-            }
-          }, 100)
-        }
-      }
-    }
-
-    const preOnRelease = (released, x, y) => {
-      if (props.onRelease) props.onRelease()
-      setWaitingGrid(undefined)
-      let grid = posToGrid({x: x, y: y})
-      if (grid.x + released.size.x > props.numColumns) {
-        grid.x = props.numColumns - released.size.x
-      }
-      if (shouldMovePosition(released, grid)) {
-        moveSnap(released, grid)
-      }
-      placeSnap(released, grid)
-      cleanRows()
-      let newItems = [...props.items]
-      newItems[released.id].pos = gridToPos(grid)
-      newItems[released.id].grid = grid
-      props.onUpdate(newItems)
-    }
-
-    const shouldMovePosition = (snap, grid) => {
-      if (!grid) return false
-      if (snap.grid.x == grid.x && snap.grid.y == grid.y) return false
-      return true
-    }
-
-    const getSwappedList = (snap, grid) => {
-      let swappedList = []
-      let footprint = getFootprint(snap,grid)
-      for (let f in footprint) {
-          let swapped = getSnap(footprint[f])
-          if (swapped && !swappedList.includes(swapped)){
-            swappedList.push(swapped)
-          }
-      }
-      return swappedList
-    }
-
-    const moveSnap = (snap, grid) => {
-        if (!spotAvailable(grid, snap)) {
-          let swappedList = getSwappedList(snap, grid)
-          updateSnapGrid(grid, snap, true)
-          let blocked = getFootprint(snap, grid)
-          for (let s in swappedList) {
-            let swapped = swappedList[s]
-            grabSnap(swapped)
-            let slot = findEmptySlot(swapped, blocked)
-            swapped.setGrid(slot)
-            placeSnap(swapped, slot)
-          }
-        }
-        else {
-          updateSnapGrid(grid, snap, true)
-        }
-        snap.setGrid(grid)
-    }
-
-    const getFootprint = (snap,grid) => {
-      let footprint = []
-      for (let dx = 0; dx < snap.size.x; dx++) {
-        for (let dy = 0; dy < snap.size.y; dy++) {
-          footprint.push({x: grid.x + dx, y: grid.y + dy})	
-        }
-      }
-      return footprint
-    }
-
-    const updateSnapGrid = (grid, snap, clear) => {
-        let footprint = getFootprint(snap, grid)
-        let newNumRows = numRows
-        for (let f in footprint) {
-          let value = clear ? {empty: true} : {empty: false, id: snap.id, leader: false}
-          let newSnapGrid = {...snapGrid}
-          if (!newSnapGrid.hasOwnProperty(footprint[f].x)) continue
-          newSnapGrid[footprint[f].x][footprint[f].y] = value
-          setSnapGrid(newSnapGrid)
-          newNumRows = Math.max(newNumRows, footprint[f].y)
-        }
-        if (newNumRows == numRows) return
-        setNumRows(newNumRows)
-        Animated.timing(screenSlide, {
-          toValue: (newNumRows+extraVisibleRows)*rowHeight ,
-          duration: 200,
-          useNativeDriver: false,
-          }
-        ).start();
-    }
-
-
-    const isCloser = (test, closest, snap) => {
-      let grid = snap.grid
-      if (closest == null) return true
-      let testDist = (Math.abs(grid.x - test.x) + Math.abs(grid.y - test.y))
-      let closestDist = (Math.abs(grid.x - closest.x) + Math.abs(grid.y - closest.y))
-      if (testDist < closestDist) return true
-      if (testDist > closestDist) return false
-      if (Math.min(Math.abs(grid.x - test.x), Math.abs(grid.y - test.y)) < Math.min(Math.abs(grid.x - closest.x), Math.abs(grid.y - closest.y))) return true
-      if (test.y < closest.y) return true
-      return false
-      if (closest.x == dragging.x && closest.y == dragging.y) return true
-      if (test.x == dragging.x && test.y == dragging.y) return false
-      if (dragging.x < x < testX) return true
-      if (dragging.x > x > testX) return true
-      if (dragging.y < y < testY) return true
-      if (dragging.y > y > testY) return true
-      return false
-    }
-
-    const spotAvailable = (grid, snap) => {
-        let footprint = getFootprint(snap,grid)
-        for (let f in footprint) {
-          if (footprint[f].x < 0 || footprint[f].x > props.numColumns) return false
-          let square = getSquare(footprint[f])
-          if (square && !square.empty) return false
-        }
-        return true
-    }
-
-    const findEmptySlot = (swapped, blocked) => {
-      let closest = null
-      for (let delX = 0; delX < props.numColumns; delX++) {
-        for (let delY = 0; delY < numRows; delY++) {
-          let test = {x: (swapped.grid.x + delX) % props.numColumns,
-                      y: (swapped.grid.y + delY) % numRows
-                     }
-          let footprint = getFootprint(swapped, test)
-          let clear = true
-          for (let f in footprint) {
-            if (blocked.some(e => e.x == footprint[f].x && e.y == footprint[f].y)) {
-              clear = false
-              break
-            }
-          }
-          if (clear && spotAvailable(test, swapped) && isCloser(test, closest, swapped)) {
-              closest = test
-          }
-        }
-      }
-      if (!closest) {
-        return makeEmptySlot(swapped, blocked)
-      }
-      return closest
-    }
-
-    const makeEmptySlot = (swapped, blocked) => {
-      let newSnapGrid = {...snapGrid}
-      for (let c = 0; c < props.numColumns; c++) {
-        for (let r = numRows; r < numRows + swapped.size.y; r++) {
-          newSnapGrid[c][r] = emptySquare
-        }
-      }
-      setSnapGrid(newSnapGrid)
-      let slot = {x:0, y:numRows}
-      let newNumRows = numRows + swapped.size.y
-      setNumRows(numRows + swapped.size.y)
-      Animated.timing(screenSlide, {
-        toValue: (newNumRows+extraVisibleRows)*rowHeight ,
-        duration: 200,
-        useNativeDriver: false,
-        }
-      ).start();
-      return slot
-    }
-
-    const cleanRows = () => {
-      let newNumRows = 0
-      for (let c = 0; c < props.numColumns; c++) {
-        for (let r in snapGrid[c]) {
-          if (snapGrid[c][r].empty) continue
-          newNumRows = Math.max(r, newNumRows)
-        }
-      }
-      newNumRows++;
-      if (newNumRows == numRows) return
-      setNumRows(newNumRows)
-      Animated.timing(screenSlide, {
-        toValue: (newNumRows+extraVisibleRows)*rowHeight ,
-        duration: 800,
-        useNativeDriver: false,
-        isInteraction: false
-        }
-      ).start();
-    }
-
+      let unsubscribe = AppState.shared.addListener(() => {
+        setActionLayout({...AppState.shared.character.actionLayout})
+      })
+      return unsubscribe
+    },[])
 
     const gridToPos = (grid) => {
       return {x: grid.x*colWidth, y: grid.y*rowHeight}
@@ -320,56 +39,279 @@ export default function SnapGrid(props) {
       return grid
     }
 
-    const overlapingGrid = (pos) => {
-      let closestGrid = posToGrid(pos)
-      let closest = gridToPos(closestGrid)
-      let normalized = {x: Math.abs(closest.x - pos.x)/colWidth, y: Math.abs(closest.y - pos.y)/rowHeight}
-      let normalizedDist = normalized.x**2 + normalized.y**2
-      if (normalizedDist > 0.25) return null
-      return closestGrid;
+    const updateLayout = (snap, grid) => {
+      if (!AppState.shared.character.actionLayout.hasOwnProperty(snap.id)) {
+        AppState.shared.character.actionLayout[snap.id] = snap
+      }
+      AppState.shared.character.actionLayout[snap.id].grid = grid
+      AppState.shared.character.actionLayout[snap.id].pos = gridToPos(grid)
+      AppState.shared.saveState()
     }
 
-    screenSlide.addListener((value) => {
-      setScreenHeight(value.value)
-    })
-    for (let i = 0; i < props.numColumns; i++) {
-      snapGrid[i] = {}
+    const preOnGrab = (snap, x, y) => {
+      console.log("GRABBING", snap)
+      props.onGrab(snap, x, y)
     }
 
-
-
-
-    /*let snapVisuals = []
-    for (let c in snapGrid) {
-      for (let r in snapGrid[c]) {
-        let left = c*colWidth
-        let top = r*rowHeight
-        let text = snapGrid[c][r].id
-        let textView = (
-          <Text style={{position: 'absolute', left:left, top:top}}>
-          {text}
-          </Text>
-        )
-        snapVisuals.push(textView)
+    const preOnMove = (snap, x, y, pageX, pageY) => {
+      if (screenHeight - y < 280 &&
+        Math.abs(Dimensions.get('window').width/2 - (x + snap.size.x*colWidth/2)) < snap.size.x*colWidth/2) {
+        setShouldDelete(true)
+      }
+      else {
+        setShouldDelete(false)
+      }
+      let grid = posToGrid({x, y})
+      if (waitingGrid != grid) {
+        waitingGrid = grid
+        setTimeout( () => {
+          if (waitingGrid == grid) {
+            console.log("Hover Detected")
+          }
+        }, 100)
       }
     }
-    for (let r in snapRefs) {
-      let snap = snapRefs[r].current
-      if(snap) snap.forceUpdate()
+
+    const getOverlappingSnaps = (snap, grid, blocked) => {
+      let olSnap = new Set()
+      let minX = grid.x
+      let maxX = grid.x + snap.size.x - 1
+      let minY = grid.y
+      let maxY = grid.y + snap.size.y - 1
+      let searchedSnaps = actionLayout
+      if (blocked) searchedSnaps = [...actionLayout, ...blocked]
+      for (let id in searchedSnaps) {
+        if (id == snap.id) continue
+        let item = actionLayout[id] 
+        let iminX = item.grid.x
+        let imaxX = item.grid.x + item.size.x - 1
+        let iminY = item.grid.y
+        let imaxY = item.grid.y + item.size.y - 1
+        if ((minX <= iminX && iminX <= maxX) || (iminX <= minX && minX <= imaxX)) {
+          if ((minY <= iminY && iminY <= maxY) || (iminY <= minY && minY <= imaxY)) {
+            olSnap.add(item)
+          }
+        }
+      }
+      return [...olSnap.values()]
     }
-    */
-    return (
-      <View style={{height: screenHeight, width:props.numColumns*colWidth}}>
-        <GestureRecognizer
-          style={{position:'absolute', zIndex:-1, width:'100%', height:'100%'}}
-          onSwipeRight={props.onSwipeRight}
-          onSwipeLeft={props.onSwipeLeft}
-          directionalOffsetThreshold={20}
-          velocityThreshold={0.6}
+
+    const findNewSpot = (replaced, blocked) => {
+      for (let delX = 0; delX < props.numColumns; delX++) {
+        for (let delY = 0; delY < numRows; deyY++) {
+          let testGrid = {x: (replaced.grid.x + delX) % props.numColumns,
+                          y: (replaced.grid.y + deyY) % numRows
+                         }
+          
+        }
+      }
+    }
+
+    const findNewSpots = (replaced, blocked) => {
+      
+    }
+
+    const preOnRelease = (snap, x, y) => {
+      props.onRelease(snap, x, y)
+      if (screenHeight - y < 280 &&
+        Math.abs(Dimensions.get('window').width/2 - (x + snap.size.x*colWidth/2)) < snap.size.x*colWidth/2) {
+        delete AppState.shared.character.actionLayout[snap.id]
+        setShouldDelete(false)
+        AppState.shared.saveState()
+      }
+      else if (screenHeight - y < Dimensions.get('window').width/2.5) {
+        snap.snapToPos(snap.pos)
+      }
+      else {
+        let grid = posToGrid({x, y})
+        let olSnap = getOverlappingSnaps(snap, grid)
+        let updateNewSpot = null
+        if (olSnap.length != 0) {
+          updateNewSpot = findNewSpots(olSnap, [{snap: snap, grid: grid}])
+        }
+        snap.snapToPos(gridToPos(grid), () => {
+          updateLayout(snap,grid)
+          if (updateNewSpot) updateNewSpot()
+        })
+      }
+    }
+
+
+    const getSnapsFromLayout = (layout, flipped, doOnRelease) => {
+      let snaps = []
+      for (let id in layout) {
+        let item = layout[id]
+        let renderFront = () => null
+        let renderBack = () => null
+        switch (item.type) {
+          case "SnapText":
+          renderFront = (onLongPress, onPressOut) => {
+          return (
+            <StatText
+              back={false}
+              display={item.display}
+              onDisplayChange={(text) => {
+                layout[id].display = text
+                AppState.shared.saveState()
+              }}
+              onLongPress={onLongPress}
+              onPressOut={onPressOut}
+            />)
+          }
+          renderBack = (onLongPress, onPressOut) => {
+          return (
+            <StatText
+              back={true}
+              display={item.display}
+              onDisplayChange={(text) => {
+                layout[id].display = text
+                AppState.shared.saveState()
+              }}
+              onLongPress={onLongPress}
+              onPressOut={onPressOut}
+            />)
+          }
+          break
+          case "Avatar":
+          renderFront = (onLongPress, onPressOut) => {
+          return (
+            <SnapAvatar
+              back={false}
+              onLongPress={onLongPress}
+              onPressOut={onPressOut}
+            />)
+          }
+          renderBack = (onLongPress, onPressOut) => {
+          return (
+            <SnapAvatar
+              back={true}
+              onLongPress={onLongPress}
+              onPressOut={onPressOut}
+            />)
+          }
+          break
+            
+        }
+        if (item.type == "SnapText") {
+        }
+        snaps.push(
+          <SnapDraggable
+            key={AppState.shared.character.name + id}
+            pos={gridToPos(item.grid)}
+            grid={item.grid}
+            size={item.size}
+            flipped={flipped}
+            onGrab={(g, x, y) => {preOnGrab(g, x, y)}}
+            onMove={(m, x, y, pageX, pageY) => {preOnMove(m, x, y, pageX, pageY)}}
+            onRelease={(r, x, y) => doOnRelease(r, x, y, item)}
+            width={colWidth*item.size.x}
+            height={rowHeight*item.size.y}
+            onDoubleTap={(tapped, x, y) => {props.onDoubleTap(tapped, x, y)}}
+            onTap={item.onTap}
+            renderFront={renderFront}
+            renderBack={renderBack}
+            id={id}
+          />
+        )
+      }
+      return snaps
+
+    }
+    const adderPosToGrid = (pos) => {
+      pos.y += Dimensions.get('window').height - rowHeight
+      let grid = {x: Math.floor(pos.x/colWidth + 0.5), y: Math.floor(pos.y/rowHeight + 0.5)}
+      return grid
+    }
+    const gridToAdderPos = (grid) => {
+      let pos = {x: grid.x*colWidth, y: grid.y*rowHeight}
+      pos.y -= Dimensions.get('window').height - rowHeight
+      return pos
+    }
+
+    const addToGrid = (snap, x, y, item) => {
+      props.onRelease(snap, x, y)
+      let adderGrid = adderPosToGrid({x, y})
+      console.log(x, y)
+      console.log(adderGrid.x, adderGrid.y)
+      let screenGrid = adderPosToGrid({x: x - adderPosition.current, y})
+      screenGrid.y += 1 - snap.size.y
+      if (y + Dimensions.get('window').width/2.5 > 0) {
+        snap.snapToPos(snap.pos)
+      }
+      else {
+        let snapPos = gridToAdderPos(adderGrid)
+        snap.snapToPos(snapPos, () => {
+          item.id = snap.id
+          updateLayout(item,screenGrid)
+        })
+      }
+    }
+
+    const [adderPosition, setAdderPosition] = React.useState({current: Dimensions.get('window').width})
+    let snapAdder = null
+    if (props.editing) {
+      let id = Math.max(...Object.keys(actionLayout)) + 6
+      console.log(id)
+			let snapOptions = {}
+      snapOptions[id++] = ( 
+				{grid: {x: 0, y: 0}, size: {x:6, y:1}, type:"SnapText", display:"Stat:\nX"})
+      snapOptions[id++] = (
+        {grid: {x: 6, y: 0}, size: {x:2, y:1}, type:"SnapText", display:"Stat:\nX"})
+      snapOptions[id++] = (
+				{grid: {x: 8, y: 0}, size: {x:3, y:1}, type:"SnapText", display:"Stat:\nX"})
+      snapOptions[id++] = ( 
+				{grid: {x: 11, y: 0}, size: {x:4, y:1}, type:"SnapText", display:"Stat:\nX"})
+      snapOptions[id++] = (
+				{grid: {x: 15, y: 0}, size: {x:2, y:2}, type:"Avatar"})
+      snapAdder = (
+          <ScrollView
+            snapToInterval={colWidth}
+            onScroll={(e) => {
+              adderPosition.current = e.nativeEvent.contentOffset.x
+            }}
+            scrollEventThrottle={0.5}
+            contentOffset={{x: Dimensions.get('window').width, y: 0}}
+            scrollEnabled={props.scrollEnabled}
+            horizontal={true}
+            contentContainerStyle={{
+              height: Dimensions.get('window').width/2.5,
+              alignSelf: 'flex-end',
+              backgroundColor:Colors['dark'].primary,
+            }}
+
+          >
+            <View style={{
+              backgroundColor:Colors['dark'].primary,
+              justifyContent: 'flex-end',
+              height: Dimensions.get('window').width/2.5,
+              width: Dimensions.get('window').width*3,
+            }}>
+              {getSnapsFromLayout(snapOptions, false, addToGrid)}
+            </View>
+          </ScrollView>
+      )
+    }
+
+    let trashColor = shouldDelete ? Colors['dark'].accent : Colors['dark'].primaryDark
+    let deleteIcon = props.editing ? (
+        <Ionicons
+          name='ios-trash'
+          size={60}
+          color={trashColor}
+          style={{position:'absolute', bottom: 100, height: 60, alignSelf:'center'}}
         />
-        {snappers}
+    ) : null
+
+    return (
+      <View style={{width:Dimensions.get('window').width, height:Dimensions.get('window').height}}>
+        <View style={{alignSelf:'flex-end'}}>
+          {snapAdder}
+        </View>
+        {getSnapsFromLayout(actionLayout, props.editing,(r, x, y) => {preOnRelease(r, x, y)})}
+        {deleteIcon}
       </View>
-    );
+    )
+
 }
 
 
