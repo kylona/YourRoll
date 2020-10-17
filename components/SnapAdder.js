@@ -20,7 +20,8 @@ export default function SnapAdder(props) {
 			0: {grid: {x: 0, y: 0}, size: {x:2, y:1}, type:"SnapText", display:"Stat:\nX"},
 			1: {grid: {x: 2, y: 0}, size: {x:3, y:1}, type:"SnapText", display:"Stat:\nX"},
 			2: {grid: {x: 5, y: 0}, size: {x:4, y:1}, type:"SnapText", display:"Stat:\nX"},
-      3: {grid: {x: 9, y: 0}, size: {x:2, y:2}, type:"Avatar"},
+			3: {grid: {x: 9, y: 0}, size: {x:1, y:1}, type:"SnapText", display:"\nX"},
+      4: {grid: {x: 10, y: 0}, size: {x:2, y:2}, type:"Avatar"},
 		}
 
 		const colWidth = Dimensions.get('window').width/6 

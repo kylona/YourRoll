@@ -254,16 +254,12 @@ export default function SnapGrid(props) {
       let id = Math.max(...Object.keys(actionLayout)) + 6
       console.log(id)
 			let snapOptions = {}
-      snapOptions[id++] = ( 
-				{grid: {x: 0, y: 0}, size: {x:6, y:1}, type:"SnapText", display:"Stat:$X"})
-      snapOptions[id++] = (
-        {grid: {x: 6, y: 0}, size: {x:2, y:1}, type:"SnapText", display:"Stat:$X"})
-      snapOptions[id++] = (
-				{grid: {x: 8, y: 0}, size: {x:3, y:1}, type:"SnapText", display:"Stat:$X"})
-      snapOptions[id++] = ( 
-				{grid: {x: 11, y: 0}, size: {x:4, y:1}, type:"SnapText", display:"Stat:$X"})
-      snapOptions[id++] = (
-				{grid: {x: 15, y: 0}, size: {x:2, y:2}, type:"Avatar"})
+      snapOptions[id++] = ( {grid: {x: 0, y: 0}, size: {x:6, y:1}, type:"SnapText", display:"Stat:$X"})
+      snapOptions[id++] = ( {grid: {x: 6, y: 0}, size: {x:2, y:1}, type:"SnapText", display:"Stat:$X"})
+      snapOptions[id++] = ( {grid: {x: 8, y: 0}, size: {x:3, y:1}, type:"SnapText", display:"Stat:$X"})
+      snapOptions[id++] = ( {grid: {x: 11, y: 0}, size: {x:4, y:1}, type:"SnapText", display:"Stat:$X"})
+      snapOptions[id++] = ( {grid: {x: 15, y: 0}, size: {x:1, y:1}, type:"SnapText", display:"$X"})
+      snapOptions[id++] = ( {grid: {x: 16, y: 0}, size: {x:2, y:2}, type:"Avatar"})
       snapAdder = (
           <ScrollView
             snapToInterval={colWidth}
