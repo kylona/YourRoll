@@ -11,6 +11,7 @@ export default class MessageParser {
     if (resultMessage != null) {
       messages = MessageParser.pushDiceRollMessage(resultMessage, messages)
     }
+    messages[0].text = messages[0].text.replace(/~\(.*\)/g, "") //remove ~(don't shows)
     return messages
   }
 
@@ -116,7 +117,11 @@ export default class MessageParser {
       let evaled = evaluate(mathExps[e])
       mathString = mathString.replace(mathExps[e], evaled)
     }
-    let assignWrapped = mathString.match(/\%[a-zA-Z\d-]+\s*=\s*[0-9]+/g)
+    let assignWrapped = mathString.match(/\%[a-zA-Z\d_]+\s*=\s*[0-9]+/g)
+    console.log(assignWrapped)
+    if (assignWrapped == null || assignWrapped == []) {
+      return
+    }
     for (assignment of assignWrapped) {
       let assignStat = assignment.split(/\s*=\s*/g)[0].replace("%", "").toLowerCase()
       let assignValue = assignment.split(/\s*=\s*/g)[1]
@@ -127,7 +132,7 @@ export default class MessageParser {
 
   static parseBlings(string) {
     let origString = string
-    let blingWrapped = string.match(/\$[a-zA-Z\d-]+/g)
+    let blingWrapped = string.match(/\$[a-zA-Z\d_]+/g)
     if (blingWrapped == null || blingWrapped.length == 0) return string
     for (let b in blingWrapped) {
       let bling = blingWrapped[b].toLowerCase().replace(/\s/,'').replace('$','')
@@ -141,7 +146,7 @@ export default class MessageParser {
 
   static parseMacros(string) {
     let origString = string
-    let hashWrapped = string.match(/\#[a-zA-Z\d-]+/g)
+    let hashWrapped = string.match(/\#[a-zA-Z\d_]+/g)
     if (hashWrapped == null || hashWrapped.length == 0) return string
     for (let h in hashWrapped) {
       let hash = hashWrapped[h].toLowerCase().replace(/\s/,'').replace('#','')
