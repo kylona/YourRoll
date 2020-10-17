@@ -42,11 +42,8 @@ export default function TableAdder(props) {
               AppState.shared.changeTable(newTable)
 							let getNotified = async () => {
 								let notificationToken = await AppState.shared.registerForPushNotificationsAsync()
-								let user = {
-									id: notificationToken.replace("ExponentPushToken", "").replace("[","").replace("]",""),
-								}
-								Fire.shared.addUser(user)
-                console.log("Pushing Notification Token")
+								let user = ObjectFactory.createUser(AppState.shared)
+								Fire.shared.sendUser(user)
 							}
               getNotified()
 						}

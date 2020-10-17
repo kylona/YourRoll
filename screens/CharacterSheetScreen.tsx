@@ -6,6 +6,7 @@ import GestureRecognizer, {swipeDirections} from 'react-native-swipe-gestures';
 import SnapGrid from '../components/SnapGrid.js';
 import Fire from '../util/Fire';
 import AppState from '../util/AppState';
+import ObjectFactory from '../util/ObjectFactory';
 import Colors from '../constants/Colors.ts'
 import ImagePicker from '../util/ImagePicker';
 import BlobCache from '../util/BlobCache';
@@ -37,10 +38,8 @@ export default function CharacterSheetScreen(props) {
        <TouchableOpacity style={{...styles.snapFront, marginTop: 10}}
         onPress={async () => {
 					let notificationToken = await AppState.shared.registerForPushNotificationsAsync()
-          let user = {
-            id: notificationToken.replace("ExponentPushToken", "").replace("[","").replace("]",""),
-          }
-          Fire.shared.addUser(user)
+          let user = ObjectFactory.createUser(AppState.shared)
+          Fire.shared.sendUser(user)
         }}
         >
         <Text style={{fontSize:30}}>Push this to register for notifications</Text> 

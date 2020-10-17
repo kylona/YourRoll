@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View, Clipboard, Image, Keyboard, ScrollView, StyleSheet, Vibration } from 'react-native';
+import { View, TouchableOpacity, Clipboard, Dimensions, Image, Keyboard, ScrollView, StyleSheet, Vibration } from 'react-native';
 import { Text } from '../components/Themed';
 import Colors from '../constants/Colors.ts';
 import RecordingPanel from '../components/RecordingPanel';
@@ -11,11 +11,12 @@ import AppState from '../util/AppState';
 import MessageParser from '../util/MessageParser';
 import BlobCache from '../util/BlobCache';
 import useColorScheme from '../hooks/useColorScheme';
-import { GiftedChat, Bubble, Composer, InputToolbar, Send } from '../components/ChatUI';
+import { GiftedChat, Bubble, Message, Composer, InputToolbar, Send } from '../components/ChatUI';
 import { Ionicons } from '@expo/vector-icons';
 import GestureRecognizer, {swipeDirections} from 'react-native-swipe-gestures';
-import { TouchableOpacity } from 'react-native-gesture-handler'
 import ReactionsPanel from '../components/ReactionPanel';
+import ReactionsDisplay from '../components/ReactionDisplay';
+import TurnTracker from '../components/TurnTracker';
 import AutoComplete from '../components/AutoComplete';
 import oofReact from '../assets/images/oof.png';
 
@@ -25,8 +26,10 @@ export default function ChatScreen(props) {
   const [recordPanelEnabled, enableRecordPanel] = React.useState(false)
 	const [attachedReply, attachReply] = React.useState(null)
 	const [messages, setMessages] = React.useState([...AppState.shared.messages])
+  const [users, setUsers] = React.useState([...AppState.shared.users])
   const [selectedMessage, selectMessage] = React.useState(null)
   const [reactPanelPos, setReactPanelPos] = React.useState(null)
+  const [reactDisplayPos, setReactDisplayPos] = React.useState(null)
 	const [isLoading, setLoading] = React.useState(false)
   const [keyboardUp, setKeyboardUp] = React.useState(false)
 	const theme = useColorScheme();
@@ -67,6 +70,7 @@ export default function ChatScreen(props) {
     Keyboard.addListener("keyboardWillHide", keyboardWillHide)
     let unsubscribeAppState = AppState.shared.addListener(() => {
       setMessages([...AppState.shared.messages])
+      setUsers([...AppState.shared.users])
     })
     return () => {
       Fire.shared.offMessages()
@@ -106,7 +110,7 @@ export default function ChatScreen(props) {
         image: image,
         reply: reply,
       } )
-      //await setMessages([...GiftedChat.insert(messages, message, 'timestamp')])
+      await setMessages([...GiftedChat.insert(messages, message, 'timestamp')])
       AppState.shared.sendMessages([message])
 		}
 	}
@@ -124,18 +128,8 @@ export default function ChatScreen(props) {
     AppState.shared.sendMessages(cleanMessages)
 	}
 
-  const getUser = () => {
-    const {name, avatar} = AppState.shared.character
-    let id = Fire.shared.uid
-		if (!id)  { //TODO don't rely on remembering uid
-      id = AppState.shared.player._id
-      //console.log("BLANK ID: " + AppState.shared.player._id)
-    }
-    return ({
-      name: name,
-      _id: id,
-      avatar: avatar,
-    })
+  const getUser = () => { //TODO ObjectFactory to create user Object
+    return ObjectFactory.createUser(AppState.shared)
   }
 
 	const renderActions = (props) => {
@@ -310,7 +304,9 @@ export default function ChatScreen(props) {
       selectMessage(message)
       if (props.marker) {
          props.marker.measure((x, y, width, height, pageX, pageY) => {
-           setReactPanelPos({x: pageX, y: pageY})
+           let maxY = Dimensions.get('window').height - 90
+           let posY = pageY < 153 ? 153 : pageY > maxY ? maxY : pageY
+           setReactPanelPos({x: pageX, y: posY})
          })
       }
     }
@@ -343,9 +339,49 @@ export default function ChatScreen(props) {
 			}
     }
     return (
-      <View style={riStyle}>
+      <TouchableOpacity
+        style={riStyle}
+        onPress={() => {
+         props.marker.measure((x, y, width, height, pageX, pageY) => {
+           let maxY = Dimensions.get('window').height - 410
+           let posY = pageY < 143 ? 143 : pageY > maxY ? maxY : pageY
+           setReactDisplayPos({x: pageX, y: posY})
+         })
+         selectMessage(props.currentMessage)
+        }}
+      >
 				{oofs}
         <Text style={styles.reactionEmojiFont}>{reactionText}</Text>
+      </TouchableOpacity>
+    )
+  }
+
+  const getReadIndicator = (props) => {
+    let readPics = []
+    for (let user of AppState.shared.users) {
+      if (user.id == Fire.shared.uid) continue
+      if (user.lastReadMessageId == props.currentMessage.id) {
+        readPics.push (
+          <Image key={Math.random()} style={styles.oof} source={{uri: user.avatar}}/>
+        )
+      }
+    }
+    if (readPics == []) return null
+    return (
+      <View style={styles.readIndicator} >
+				{readPics}
+      </View>
+    )
+  }
+
+  const renderMessage = (props) => {
+    props.users = users
+    return (
+      <View style={{flex:0}}
+        key={props}
+      >
+        <Message {...props}/>
+        {getReadIndicator(props)}
       </View>
     )
   }
@@ -356,8 +392,6 @@ export default function ChatScreen(props) {
     let bubble = (
         <View style={{flex:0}}
 					ref={(ref) => { props.marker = ref }}
-					onLayout={({nativeEvent}) => {
-					}}
         >
           {getReplyBubble(props)}
           <Bubble {...props}/>
@@ -440,7 +474,7 @@ export default function ChatScreen(props) {
 		let newProps = {...props}
 	  newProps.containerStyle = styles.send
 		return (
-			<Send {...newProps}/>
+			 <Send {...newProps}/>
 		)
 	}
   return (
@@ -459,6 +493,7 @@ export default function ChatScreen(props) {
 				renderInputToolbar={(props) => renderInputToolbar(props)}
 				renderComposer={renderComposer}
 				renderSend={renderSend}
+				renderMessage={(props) => renderMessage(props)}
 				renderMessageAudio={(props) => renderAudioBubble(props)}
 				renderBubble={(props) => renderBubble(props)}
         bottomOffset={Platform.OS =='ios' ? 65 : -5}
@@ -476,6 +511,9 @@ export default function ChatScreen(props) {
           sendAudioMessage(url)
         }}
       />
+      <View pointerEvents='box-none' style={styles.header}>
+        <TurnTracker/>
+      </View>
       <View pointerEvents='box-none' style={styles.overlay}>
         <ReactionsPanel
          pos={reactPanelPos}
@@ -510,6 +548,13 @@ export default function ChatScreen(props) {
            setReactPanelPos(null)
          }}
         />
+        <ReactionsDisplay
+         pos={reactDisplayPos}
+         reactions={selectedMessage ? selectedMessage.reactions : null}
+         dismissPressed={() => {
+          setReactDisplayPos(null)
+         }}
+        />
       </View>
     </View>
   );
@@ -521,6 +566,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  header: {
+    position:'absolute',
+    top: 0,
+    width: '100%',
   },
   overlay: {
     position:'absolute',
@@ -696,12 +746,22 @@ const styles = StyleSheet.create({
     transform: [
       {translateX: -60},
       {translateY: 0},
-    ]
+    ],
   },
   reactionEmojiFont: {
     fontSize: 14,
     margin: 3,
     color: Colors['dark'].textLight,
+  },
+  readIndicator: {
+    flex: 0,
+    flexDirection: 'row',
+    width: '100%',
+    alignItems: 'flex-end',
+    alignSelf: 'flex-end',
+    alignContent: 'flex-end',
+    justifyContent: 'flex-end',
+    margin: 5,
   },
 	oof: {
     width: 20,

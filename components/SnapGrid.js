@@ -32,9 +32,10 @@ export default function SnapGrid(props) {
       return {x: grid.x*colWidth, y: grid.y*rowHeight}
     }
 
-    const posToGrid = (pos) => {
+    const posToGrid = (pos, size) => {
       let grid = {x: Math.floor(pos.x/colWidth + 0.5), y: Math.floor(pos.y/rowHeight + 0.5)}
-      grid.x = grid.x > props.numColumns-1 ? props.numColumns-1 : grid.x < 0 ? 0 : grid.x
+      grid.x = grid.x < 0 ? 0 : grid.x
+      if (grid.x + size.x > props.numColumns-1) grid.x = props.numColumns - size.x
       grid.y = grid.y < 0 ? 0 : grid.y
       return grid
     }
@@ -61,7 +62,7 @@ export default function SnapGrid(props) {
       else {
         setShouldDelete(false)
       }
-      let grid = posToGrid({x, y})
+      let grid = posToGrid({x, y}, snap.size)
       if (waitingGrid != grid) {
         waitingGrid = grid
         setTimeout( () => {
@@ -123,7 +124,7 @@ export default function SnapGrid(props) {
         snap.snapToPos(snap.pos)
       }
       else {
-        let grid = posToGrid({x, y})
+        let grid = posToGrid({x, y}, snap.size)
         let olSnap = getOverlappingSnaps(snap, grid)
         let updateNewSpot = null
         if (olSnap.length != 0) {
@@ -254,13 +255,13 @@ export default function SnapGrid(props) {
       console.log(id)
 			let snapOptions = {}
       snapOptions[id++] = ( 
-				{grid: {x: 0, y: 0}, size: {x:6, y:1}, type:"SnapText", display:"Stat:\nX"})
+				{grid: {x: 0, y: 0}, size: {x:6, y:1}, type:"SnapText", display:"Stat:$X"})
       snapOptions[id++] = (
-        {grid: {x: 6, y: 0}, size: {x:2, y:1}, type:"SnapText", display:"Stat:\nX"})
+        {grid: {x: 6, y: 0}, size: {x:2, y:1}, type:"SnapText", display:"Stat:$X"})
       snapOptions[id++] = (
-				{grid: {x: 8, y: 0}, size: {x:3, y:1}, type:"SnapText", display:"Stat:\nX"})
+				{grid: {x: 8, y: 0}, size: {x:3, y:1}, type:"SnapText", display:"Stat:$X"})
       snapOptions[id++] = ( 
-				{grid: {x: 11, y: 0}, size: {x:4, y:1}, type:"SnapText", display:"Stat:\nX"})
+				{grid: {x: 11, y: 0}, size: {x:4, y:1}, type:"SnapText", display:"Stat:$X"})
       snapOptions[id++] = (
 				{grid: {x: 15, y: 0}, size: {x:2, y:2}, type:"Avatar"})
       snapAdder = (

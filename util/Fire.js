@@ -65,6 +65,10 @@ class Fire {
     return this.database.ref(Fire.shared.tableId).child('maps');
   }
 
+  get pinnedMessage() {
+    return this.database.ref(Fire.shared.tableId).child('pinnedMessage');
+  }
+
   get tokens() {
     return this.database.ref(Fire.shared.tableId).child('tokens');
   }
@@ -94,11 +98,19 @@ class Fire {
     return Date.now();
   }
 
-  onMessageReceived = callback => {
-    this.messages
-      .orderByChild('timestamp')
-      .limitToLast(20)
-      .on('child_added', snapshot => callback(this.parseMessage(snapshot)));
+  onMessageReceived = (latest, callback) => {
+    if (latest != null) {
+      this.messages
+        .orderByChild('timestamp')
+        .startAt(latest.timestamp - 1)
+        .on('child_added', snapshot => callback(this.parseMessage(snapshot)));
+    }
+    else {
+      this.messages
+        .orderByChild('timestamp')
+        .limitToLast(20)
+        .on('child_added', snapshot => callback(this.parseMessage(snapshot)));
+    }
   }
 
   onMessageUpdated = callback => {
@@ -120,6 +132,9 @@ class Fire {
   }
   onMap = callback => {
     this.maps.on('value', snapshot => callback(snapshot.val()));
+  }
+  onPinnedMessage = callback => {
+    this.pinnedMessage.on('value', snapshot => callback(snapshot.val()));
   }
   onTokenAdded = callback => {
     this.tokens.on('child_added', snapshot => callback(snapshot.val()));
@@ -196,7 +211,11 @@ class Fire {
       this.maps.set(map);
   };
 
-  addUser = user => {
+  sendPinnedMessage = text => {
+      this.pinnedMessage.set(text);
+  };
+
+  sendUser = user => {
     this.users.child(user.id).set(user)
   }
 
@@ -214,6 +233,7 @@ class Fire {
     if (!this.tableId) return
     this.messages.off();
     this.maps.off();
+    this.pinnedMessage.off();
     this.tokens.off();
     this.users.off();
     this.tableName.off();
@@ -223,6 +243,10 @@ class Fire {
   }
   offMap = () => {
     this.maps.off();
+  }
+  offPinnedMessage = () => {
+    console.log("OFF PINNED MESSAGE")
+    this.pinnedMessage.off();
   }
   offTokens = () => {
     this.tokens.off();

@@ -5,6 +5,7 @@ import * as FileSystem from 'expo-file-system';
 import * as Crypto from 'expo-crypto';
 import Fire from '../util/Fire';
 import ObjectFactory from '../util/ObjectFactory';
+import AppStateUpdater from '../util/AppStateUpdater';
 import BlobCache from '../util/BlobCache';
 import {evaluate} from 'mathjs';
 import defaultPlayerAvatar from '../assets/images/defaultCharacter.png'
@@ -32,9 +33,11 @@ class AppState {
 
   setTableDefaults(appState, tableId) {
     appState[tableId] = {}
-    appState[tableId].notificationTokens = {},
-    appState[tableId].tokens = [],
-    appState[tableId].map = undefined,
+    appState[tableId].notificationTokens = {}
+    appState[tableId].users = []
+    appState[tableId].tokens = []
+    appState[tableId].map = undefined
+    appState[tableId].pinnedMessage = "Pinned Message"
     appState[tableId].unreadMessages = 0
     appState[tableId].macros = {
       strsave: 'Str Save: 1d20 + $dexsave',
@@ -174,6 +177,14 @@ class AppState {
     AppState.shared[AppState.shared.tables.active.id].map = value
   }
 
+  get pinnedMessage() {
+    return AppState.shared[AppState.shared.tables.active.id].pinnedMessage
+  }
+
+  set pinnedMessage(text) {
+    return AppState.shared[AppState.shared.tables.active.id].pinnedMessage = text
+  }
+
   get tokens() {
     return AppState.shared[AppState.shared.tables.active.id].tokens
   }
@@ -181,7 +192,17 @@ class AppState {
     AppState.shared[AppState.shared.tables.active.id].tokens = value
   }
 
+  get users() {
+
+    return AppState.shared[AppState.shared.tables.active.id].users
+  }
+
+  set users(value) {
+    AppState.shared[AppState.shared.tables.active.id].users = value
+  }
+
   onMessage(message) {  
+    AppState.shared.lastReadMessage = message
     const cacheImages = async () => {
       if (message.user.avatar && message.user.avatar != null) {
         message.user.avatar = await BlobCache.shared.get(message.user.avatar)
@@ -205,6 +226,8 @@ class AppState {
       }
       AppState.shared.messages = GiftedChat.insert(AppState.shared.messages, message, 'timestamp')
       AppState.shared.saveState()
+      let user = ObjectFactory.createUser(AppState.shared)
+      Fire.shared.sendUser(user)
     }
     )
   }
@@ -249,7 +272,6 @@ class AppState {
     */
     Fire.shared.sendMessages(messages) 
     for (let m in messages) {
-      console.log("Sending Message")
       let message = messages[m]
       for (let t in AppState.shared.notificationTokens) {
         let title = message.user.name
@@ -259,7 +281,6 @@ class AppState {
           if (message.audio) body = "Sent an audio recording."
         }
         Fire.shared.pushNotification(AppState.shared.notificationTokens[t], title, body)
-        console.log("Pushing Notification" + t)
       }
     }
   }
@@ -285,6 +306,18 @@ class AppState {
           AppState.shared.map = res 
           AppState.shared.saveState()
         })
+      }
+    }
+
+    onPinnedMessage = (message) => {
+      if (message == 'null') {
+        AppState.shared.pinnedMessage = "" 
+        AppState.shared.saveState()
+      }
+      else {
+        console.log(message)
+        AppState.shared.pinnedMessage = message
+        AppState.shared.saveState()
       }
     }
 
@@ -368,18 +401,52 @@ class AppState {
     return token;
   }
 
-  addUser(user) {
+  async addUser(user) {
+    if (user.avatar) {
+      user.avatar = await BlobCache.shared.get(user.avatar)
+    }
+    if (user.playerAvatar) {
+      user.playerAvatar = await BlobCache.shared.get(user.playerAvatar)
+    }
     AppState.shared.notificationTokens[user.id] = "ExponentPushToken[" + user.id + "]"
+    AppState.shared.notificationTokens[user.id] = "ExponentPushToken[" + user.id + "]"
+    let index = AppState.shared.users.findIndex((e) => {
+      return e.id == user.id
+    })
+    if (index == -1) {
+      AppState.shared.users.push(user)
+    }
+    else {
+      AppState.shared.users[index] = user
+    }
+    console.log(AppState.shared.users)
+    AppState.shared.saveState()
+  }
+
+  async updateUser(user) {
+    if (user.avatar) {
+      user.avatar = await BlobCache.shared.get(user.avatar)
+    }
+    if (user.playerAvatar) {
+      user.playerAvatar = await BlobCache.shared.get(user.playerAvatar)
+    }
+    AppState.shared.notificationTokens[user.id] = "ExponentPushToken[" + user.id + "]"
+    let index = AppState.shared.users.findIndex((e) => {
+      return e.id == user.id
+    })
+    if (index == -1) return
+    AppState.shared.users[index] = user
+    console.log(AppState.shared.users)
+    AppState.shared.saveState()
   }
 
   async init() {
     try {
       const jsonValue = await AsyncStorage.getItem('YourRollState')
       if (jsonValue != null) {
-        const state = JSON.parse(jsonValue)
-        if (state.version != '0.07') {
-          AsyncStorage.clear()
-          return
+        let state = JSON.parse(jsonValue)
+        if (state.version != '0.08') {
+          state = AppStateUpdater.updateState(state)
         }
         if (state.player) {
           AppState.shared.player = state.player
@@ -410,6 +477,9 @@ class AppState {
               if (state[table.id].notificationTokens) {
                 AppState.shared[table.id].notificationTokens = state[table.id].notificationTokens
               }
+              if (state[table.id].users) {
+                AppState.shared[table.id].users = state[table.id].users
+              }
             }
           }
         }
@@ -418,23 +488,27 @@ class AppState {
         //This is the first time we opened the app 
         //TODO first login stuff
         let notificationToken = await AppState.shared.registerForPushNotificationsAsync()
-        let user = {
-          id: notificationToken.replace("ExponentPushToken", "").replace("[","").replace("]",""),
-        }
-        Fire.shared.addUser(user)
+        let user = ObjectFactory.createUser(AppState.shared);
+        Fire.shared.sendUser(user)
       }
     }
     catch(e) {
       console.log("Loading Error:" + e)
     }
     try {
+      let latestMessage = null
+      if (AppState.shared.messages.length > 0) {
+        latestMessage = AppState.shared.messages[AppState.shared.messages.length -1]
+      }
       Fire.shared.tableId = AppState.shared.tables.active.id
       Fire.shared.onUserAdded(AppState.shared.addUser)
-      Fire.shared.onMessageReceived(AppState.shared.onMessage)
+      Fire.shared.onUserChanged(AppState.shared.updateUser)
+      Fire.shared.onMessageReceived(latestMessage, AppState.shared.onMessage)
       Fire.shared.onMessageUpdated(AppState.shared.onMessageUpdate)
       Fire.shared.onMessageDeleted(AppState.shared.onMessageDelete)
       Fire.shared.onTableNameChanged(AppState.shared.onTableNameChange)
       Fire.shared.onMap(AppState.shared.onMap)
+      Fire.shared.onPinnedMessage(AppState.shared.onPinnedMessage)
       Fire.shared.onTokenAdded(AppState.shared.onTokenAdded)
       Fire.shared.onTokenChanged(AppState.shared.onTokenChanged)
       Fire.shared.onTokenRemoved(AppState.shared.onTokenRemoved)
@@ -464,6 +538,7 @@ class AppState {
         map: AppState.shared[table.id].map,
         tokens: AppState.shared[table.id].tokens,
         notificationTokens: AppState.shared[table.id].notificationTokens,
+        users: AppState.shared[table.id].users,
       }
       state[table.id] = tableState
     }
@@ -484,14 +559,20 @@ class AppState {
     if (!AppState.shared.hasOwnProperty(table.id)) {
       AppState.shared.setTableDefaults(AppState.shared, table.id)
     }
+    let latestMessage = null
+    if (AppState.shared.messages.length > 0) {
+      latestMessage = AppState.shared.messages[AppState.shared.messages.length -1]
+    }
     Fire.shared.offEverything()
     Fire.shared.tableId = table.id
     Fire.shared.onUserAdded(AppState.shared.addUser)
-    Fire.shared.onMessageReceived(AppState.shared.onMessage)
+    Fire.shared.onUserChanged(AppState.shared.updateUser)
+    Fire.shared.onMessageReceived(latestMessage, AppState.shared.onMessage)
     Fire.shared.onMessageUpdated(AppState.shared.onMessageUpdate)
     Fire.shared.onMessageDeleted(AppState.shared.onMessageDelete)
     Fire.shared.onTableNameChanged(AppState.shared.onTableNameChange)
     Fire.shared.onMap(AppState.shared.onMap)
+    Fire.shared.onPinnedMessage(AppState.shared.onPinnedMessage)
     Fire.shared.onTokenAdded(AppState.shared.onTokenAdded)
     Fire.shared.onTokenChanged(AppState.shared.onTokenChanged)
     Fire.shared.onTokenRemoved(AppState.shared.onTokenRemoved)

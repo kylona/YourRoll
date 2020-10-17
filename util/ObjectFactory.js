@@ -32,6 +32,34 @@ export default class ObjectFactory {
     }
   }
 
+  static createUser(appstate) {
+    let {name, avatar} = appstate.character
+    let {playerName, playerAvatar} = appstate.player
+    let id = Fire.shared.uid
+    if (!id) {
+      id = appstate.player._id
+    }
+    if (!playerName) {
+      playerName = null
+    }
+    if (!playerAvatar) {
+      playerAvatar = null
+    }
+    let lastReadMessageId = null
+    if (appstate.lastReadMessage) {
+      lastReadMessageId = appstate.lastReadMessage.id
+    }
+    return ({
+      name: name,
+      _id: id,
+      id: id,
+      avatar: avatar,
+      playerName: playerName,
+      playerAvatar: playerAvatar,
+      lastReadMessageId,
+    })
+  }
+
   static createMessage(props) {
     const id = 'Message_' + Math.random().toString(36).substr(2,9)
     let text = props.text
