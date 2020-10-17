@@ -1,6 +1,5 @@
 import * as React from 'react';
-import {Animated, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { Text, View } from '../../components/Themed';
+import {Animated, View, Text,  TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Recorder from '../../util/Recorder';
 import Fire from '../../util/Fire';
 import ObjectFactory from '../../util/ObjectFactory';
@@ -15,45 +14,56 @@ export default function StatText(props) {
 
 	if (!props.back) {
 		let parsedDisplay = MessageParser.parseBlings(display)
-		let blings = parsedDisplay.match(/\%[a-zA-Z\d-]+/g)
-		let prompts = parsedDisplay.split(/\%[a-zA-Z\d-]+/g)
-		let blingInputs = []
-		if (blings == null || blings.length == 0) {
-			blingInputs.push (
-				<Text editable={false} key={parsedDisplay} style={styles.inputText}>{parsedDisplay}</Text>
-			)	
-		}
-		for (let s in blings) {
-			let stat = blings[s].replace('%', '')
-      if (prompts[s] != "") {
+    let lines = parsedDisplay.split('\n')
+    let lineViews = []
+    for (let line of lines) {
+      let blings = line.match(/\%[a-zA-Z\d-]+/g)
+      let prompts = line.split(/\%[a-zA-Z\d-]+/g)
+      let blingInputs = []
+      if (blings == null || blings.length == 0) {
+        blingInputs.push (
+          <Text editable={false} key={line} style={styles.inputText}>{line}</Text>
+        )	
+      }
+      for (let s in blings) {
+        let stat = blings[s].replace('%', '')
+        if (prompts[s] != "") {
+          blingInputs.push(
+            <Text editable={false} key={prompts[s]} style={styles.inputText}>{prompts[s]}</Text>
+          )
+        }
+        let defaultValue = AppState.shared.getStat(stat)
+        if (defaultValue == null) defaultValue = ""
+        defaultValue = defaultValue.toString()
         blingInputs.push(
-          <Text editable={false} key={prompts[s]} style={styles.inputText}>{prompts[s]}</Text>
+          <TextInput
+            key={stat}
+            defaultValue={defaultValue}
+            placeholder={stat+ '...'}
+            style={styles.inputText}
+            onEndEditing={(e) => {
+              var text = e.nativeEvent.text
+              if (text == '') return
+              if (AppState.shared.getStat(stat) != text) {
+                AppState.shared.character[stat] = text
+                AppState.shared.saveState()
+              }
+            }}
+          />
         )
       }
-      let defaultValue = AppState.shared.getStat(stat)
-      if (defaultValue == null) defaultValue = ""
-      defaultValue = defaultValue.toString()
-			blingInputs.push(
-				<TextInput
-					key={stat}
-					defaultValue={defaultValue}
-					placeholder={stat+ '...'}
-					style={styles.inputText}
-					onEndEditing={(e) => {
-						var text = e.nativeEvent.text
-						if (text == '') return
-						if (AppState.shared.getStat(stat) != text) {
-							AppState.shared.character[stat] = text
-							AppState.shared.saveState()
-						}
-					}}
-				/>
-			)
+      console.log(line)
+      console.log(blings)
+      lineViews.push(
+        <View pointerEvents='box-none' onLongPress={props.onLongPress} style={styles.lineView}>
+          {blingInputs}
+        </View>
+      )
 		}
 		
 		return (
       <View pointerEvents='box-none' onLongPress={props.onLongPress} style={styles.snapFront}>
-				{blingInputs}
+        {lineViews}
 			</View>
 		);
 
@@ -82,18 +92,23 @@ const styles = StyleSheet.create({
   snapFront: {
 		width:'100%',
 		height:'100%',
-		justifyContent: 'center',
 		alignItems: 'center',
+    justifyContent: 'center',
 		backgroundColor:Colors['dark'].accent,
 		borderRadius: 15,
   },
   snapBack: {
 		width:'100%',
 		height:'100%',
-		justifyContent: 'center',
 		alignItems: 'center',
+    justifyContent: 'center',
 		backgroundColor:Colors['dark'].primaryLight,
 		borderRadius: 15,
+  },
+  lineView: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+		alignItems: 'center',
   },
 	tableAddButton: {
     flex: 0,
