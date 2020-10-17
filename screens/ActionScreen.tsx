@@ -56,6 +56,7 @@ export default function ActionScreen(props) {
     <TouchableOpacity
       style={styles.editButton(true)}
       onPress={() => {
+        Keyboard.dismiss()
         setEditing(!editing)
       }}
     >

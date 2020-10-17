@@ -271,6 +271,13 @@ class AppState {
     }
     AppState.shared.saveState()
     */
+    let goodMessages = []
+    for (let message of messages) {
+      if (message.image != null || message.audio != null || (message.text != null && message.text.trim() != "")) {
+        goodMessages.push(message)
+      }
+    }
+    messages = goodMessages
     Fire.shared.sendMessages(messages) 
     for (let m in messages) {
       let message = messages[m]
