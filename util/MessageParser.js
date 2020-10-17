@@ -5,6 +5,7 @@ export default class MessageParser {
   static parse(messages) {
     messages[0].text = MessageParser.parseMacros(messages[0].text)
     messages[0].text = MessageParser.parseBlings(messages[0].text)
+    MessageParser.parseAssignments(messages[0].text)
     let results = MessageParser.parseDiceRolls(messages[0].text)
     let resultMessage = MessageParser.evaluateMath(messages[0].text, results)
     if (resultMessage != null) {
@@ -102,6 +103,26 @@ export default class MessageParser {
       messages.push(rollMessage)
       */
     return messages
+  }
+
+  static parseAssignments(string) {
+    let origString = string
+    string = string.replace('[','(').replace(']',')')
+    string = string.replace(/\s*\+\s*/g, '+').replace(/\s*\-\s*/g, '-')
+    string = string.replace(/\s*\*\s*/g, '*').replace(/\s*\/\s*/g, '/')
+    let mathExps = string.match(/((((\d+[\+,\-,\*,\/])+\d+)|((\((\d+[\+,\-,\*,\/])*\d+\)))))([\+,\-,\*,\/]((\d+|((\((\d+[\+,\-,\*,\/])*\d+\))))))*/g) //matches math expressions
+    let mathString = string
+    for (let e in mathExps) {
+      let evaled = evaluate(mathExps[e])
+      mathString = mathString.replace(mathExps[e], evaled)
+    }
+    let assignWrapped = mathString.match(/\%[a-zA-Z\d-]+\s*=\s*[0-9]+/g)
+    for (assignment of assignWrapped) {
+      let assignStat = assignment.split(/\s*=\s*/g)[0].replace("%", "").toLowerCase()
+      let assignValue = assignment.split(/\s*=\s*/g)[1]
+      AppState.shared.character[assignStat] = assignValue
+      AppState.shared.saveState()
+    }
   }
 
   static parseBlings(string) {

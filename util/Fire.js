@@ -99,7 +99,7 @@ class Fire {
   }
 
   onMessageReceived = (latest, callback) => {
-    if (latest != null) {
+    if (false && latest != null) {
       this.messages
         .orderByChild('timestamp')
         .startAt(latest.timestamp - 1)
@@ -108,7 +108,7 @@ class Fire {
     else {
       this.messages
         .orderByChild('timestamp')
-        .limitToLast(20)
+        .limitToLast(50)
         .on('child_added', snapshot => callback(this.parseMessage(snapshot)));
     }
   }

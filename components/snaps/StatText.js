@@ -26,7 +26,7 @@ export default function StatText(props) {
         )	
       }
       for (let s in blings) {
-        let stat = blings[s].replace('%', '')
+        let stat = blings[s].replace('%', '').toLowerCase()
         if (prompts[s] != "") {
           blingInputs.push(
             <Text editable={false} key={prompts[s]} style={styles.inputText}>{prompts[s]}</Text>
@@ -52,8 +52,6 @@ export default function StatText(props) {
           />
         )
       }
-      console.log(line)
-      console.log(blings)
       lineViews.push(
         <View pointerEvents='box-none' onLongPress={props.onLongPress} style={styles.lineView}>
           {blingInputs}

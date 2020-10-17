@@ -50,6 +50,7 @@ class AppState {
       acrobatics: 'Acrobatics: 1d20 + $dexmod',
       sleight: 'Sleight of Hand: 1d20 + $dexmod',
       soh: 'Sleight of Hand: 1d20 + $dexmod',
+      initiative: 'Initiative: 1d20 + $dexmod',
       aracana: 'Arcana: 1d20 + $intmod',
       history: 'History: 1d20 + $intmod',
       investigation: 'Investigation: 1d20 + $intmod',
@@ -60,10 +61,10 @@ class AppState {
       medicine: 'Medicine: 1d20 + $wismod',
       perception: 'Perception: 1d20 + $wismod',
       survival: 'survival: 1d20 + $wismod',
-      deception: 'deception: 1d20 + $chamod',
-      intimidation: 'intimidation: 1d20 + $chamod',
-      performance: 'performance: 1d20 + $chamod',
-      persuasion: 'persuasion: 1d20 + $chamod',
+      deception: 'Deception: 1d20 + $chamod',
+      intimidation: 'Intimidation: 1d20 + $chamod',
+      performance: 'Performance: 1d20 + $chamod',
+      persuasion: 'Persuasion: 1d20 + $chamod',
     }
     appState[tableId].messages = []
     appState[tableId].character = {
@@ -315,7 +316,6 @@ class AppState {
         AppState.shared.saveState()
       }
       else {
-        console.log(message)
         AppState.shared.pinnedMessage = message
         AppState.shared.saveState()
       }
@@ -419,7 +419,6 @@ class AppState {
     else {
       AppState.shared.users[index] = user
     }
-    console.log(AppState.shared.users)
     AppState.shared.saveState()
   }
 
@@ -436,7 +435,6 @@ class AppState {
     })
     if (index == -1) return
     AppState.shared.users[index] = user
-    console.log(AppState.shared.users)
     AppState.shared.saveState()
   }
 

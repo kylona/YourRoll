@@ -12,6 +12,7 @@ export default class AppStateUpdater {
     appState.version = 0.08
     for (table of appState.tables.list) {
       appState[table.id].users = [] 
+      appState[table.id].macros['initiative'] = 'Initiative: 1d20 + $dexmod'
     }
     console.log("Updated State", appState)
     return appState
