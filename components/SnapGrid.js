@@ -20,6 +20,7 @@ export default function SnapGrid(props) {
     const [shouldDelete, setShouldDelete] = React.useState(false)
     let waitingGrid = null
     const [numRows, setNumRows] = React.useState(props.numRows)
+    console.log(numRows)
     const [screenHeight, setScreenHeight] = React.useState((props.numRows+extraVisibleRows)*rowHeight)
     React.useEffect(() => {
       let unsubscribe = AppState.shared.addListener(() => {
@@ -300,7 +301,7 @@ export default function SnapGrid(props) {
     ) : null
 
     return (
-      <View style={{width:Dimensions.get('window').width, height:Dimensions.get('window').height}}>
+      <View style={{width:Dimensions.get('window').width, height:rowHeight*numRows}}>
         <View style={{alignSelf:'flex-end'}}>
           {snapAdder}
         </View>

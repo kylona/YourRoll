@@ -302,8 +302,9 @@ export default function ChatScreen(props) {
     props.onLongPress = (context, message) => {
       message.context = context
       selectMessage(message)
-      if (props.marker) {
-         props.marker.measure((x, y, width, height, pageX, pageY) => {
+      if (props.marker.current) {
+         props.marker.current.measure((x, y, width, height, pageX, pageY) => {
+           console.log("x is", x)
            let maxY = Dimensions.get('window').height - 90
            let posY = pageY < 153 ? 153 : pageY > maxY ? maxY : pageY
            setReactPanelPos({x: pageX, y: posY})
@@ -342,7 +343,7 @@ export default function ChatScreen(props) {
       <TouchableOpacity
         style={riStyle}
         onPress={() => {
-         props.marker.measure((x, y, width, height, pageX, pageY) => {
+         props.marker.current.measure((x, y, width, height, pageX, pageY) => {
            let maxY = Dimensions.get('window').height - 410
            let posY = pageY < 143 ? 143 : pageY > maxY ? maxY : pageY
            setReactDisplayPos({x: pageX, y: posY})
@@ -388,10 +389,11 @@ export default function ChatScreen(props) {
 
 	const renderBubble = (props) => {
     let lpProps = setLongPress(props)
-		let marker = null
+		props.marker = React.createRef(null);
     let bubble = (
         <View style={{flex:0}}
-					ref={(ref) => { props.marker = ref }}
+					ref={props.marker}
+          onLayout={() => {}}
         >
           {getReplyBubble(props)}
           <Bubble {...props}/>

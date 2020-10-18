@@ -16,7 +16,7 @@ import StatText from '../components/snaps/StatText';
 export default function ActionScreen(props) {
 
   const numColumns = 6
-  const numRows = 10
+  const numRows = 20
   const navigation = props.navigation
   const [scrollEnabled, setScrollEnabled] = React.useState(true)
 
