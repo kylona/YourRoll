@@ -102,6 +102,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
 		backgroundColor:Colors['dark'].primaryLight,
 		borderRadius: 15,
+    padding: 10,
   },
   lineView: {
     flexDirection: 'row',

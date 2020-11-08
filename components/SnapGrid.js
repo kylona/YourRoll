@@ -6,22 +6,38 @@ import SnapDraggable from '../components/SnapDraggable.js';
 import StatText from '../components/snaps/StatText';
 import SnapAvatar from '../components/snaps/SnapAvatar';
 import AppState from '../util/AppState';
-import SnapAdder from '../components/SnapAdder';
 import Colors from '../constants/Colors';
 
 export default function SnapGrid(props) {
+    const [actionLayout, setActionLayout] = React.useState(AppState.shared.character.actionLayout)
+    const numColumns = 6
+    let numRows = 10
     const extraVisibleRows = 4
-    const colWidth = Dimensions.get('window').width / props.numColumns
+    for (snapId in actionLayout) {
+      let snap = actionLayout[snapId]
+      if (numRows < snap.grid.y + extraVisibleRows) numRows = snap.grid.y + extraVisibleRows
+    }
+    const screenWidth = 500 //Dimensions.get('window').width
+    const colWidth = screenWidth / numColumns
     const rowHeight = colWidth
+    const screenHeight = (numRows+extraVisibleRows)*rowHeight
+    const [screenSlideVal, setScreenSlideVal] = React.useState(screenHeight)
+    const screenSlide = new Animated.Value(screenSlideVal)
+    screenSlide.addListener((value) => {
+      setScreenSlideVal(value.value)
+    })
+    React.useEffect(() => {
+      Animated.timing(screenSlide, {
+        toValue: screenHeight,
+        duration: 500,
+          isInteraction: true,
+          useNativeDriver: false,
+      }).start();
+    },[screenHeight])
     const emptySquare = {empty: true}
     const snapObjs = []
-    const screenSlide = new Animated.Value((props.numRows+extraVisibleRows)*rowHeight)
-    const [actionLayout, setActionLayout] = React.useState(AppState.shared.character.actionLayout)
     const [shouldDelete, setShouldDelete] = React.useState(false)
     let waitingGrid = null
-    const [numRows, setNumRows] = React.useState(props.numRows)
-    console.log(numRows)
-    const [screenHeight, setScreenHeight] = React.useState((props.numRows+extraVisibleRows)*rowHeight)
     React.useEffect(() => {
       let unsubscribe = AppState.shared.addListener(() => {
         setActionLayout({...AppState.shared.character.actionLayout})
@@ -36,7 +52,7 @@ export default function SnapGrid(props) {
     const posToGrid = (pos, size) => {
       let grid = {x: Math.floor(pos.x/colWidth + 0.5), y: Math.floor(pos.y/rowHeight + 0.5)}
       grid.x = grid.x < 0 ? 0 : grid.x
-      if (grid.x + size.x > props.numColumns-1) grid.x = props.numColumns - size.x
+      if (grid.x + size.x > numColumns-1) grid.x = numColumns - size.x
       grid.y = grid.y < 0 ? 0 : grid.y
       return grid
     }
@@ -56,8 +72,8 @@ export default function SnapGrid(props) {
     }
 
     const preOnMove = (snap, x, y, pageX, pageY) => {
-      if (screenHeight - y < 280 &&
-        Math.abs(Dimensions.get('window').width/2 - (x + snap.size.x*colWidth/2)) < snap.size.x*colWidth/2) {
+      if (screenSlideVal - y < 280 &&
+        Math.abs(screenWidth/2 - (x + snap.size.x*colWidth/2)) < snap.size.x*colWidth/2) {
         setShouldDelete(true)
       }
       else {
@@ -99,9 +115,9 @@ export default function SnapGrid(props) {
     }
 
     const findNewSpot = (replaced, blocked) => {
-      for (let delX = 0; delX < props.numColumns; delX++) {
+      for (let delX = 0; delX < numColumns; delX++) {
         for (let delY = 0; delY < numRows; deyY++) {
-          let testGrid = {x: (replaced.grid.x + delX) % props.numColumns,
+          let testGrid = {x: (replaced.grid.x + delX) % numColumns,
                           y: (replaced.grid.y + deyY) % numRows
                          }
           
@@ -115,13 +131,13 @@ export default function SnapGrid(props) {
 
     const preOnRelease = (snap, x, y) => {
       props.onRelease(snap, x, y)
-      if (screenHeight - y < 280 &&
-        Math.abs(Dimensions.get('window').width/2 - (x + snap.size.x*colWidth/2)) < snap.size.x*colWidth/2) {
+      if (props.editing && screenSlideVal - y < 280 &&
+        Math.abs(screenWidth/2 - (x + snap.size.x*colWidth/2)) < snap.size.x*colWidth/2) {
         delete AppState.shared.character.actionLayout[snap.id]
         setShouldDelete(false)
         AppState.shared.saveState()
       }
-      else if (screenHeight - y < Dimensions.get('window').width/2.5) {
+      else if (props.editing && screenSlideVal - y < screenWidth/2.5) {
         snap.snapToPos(snap.pos)
       }
       else {
@@ -220,13 +236,13 @@ export default function SnapGrid(props) {
 
     }
     const adderPosToGrid = (pos) => {
-      pos.y += Dimensions.get('window').height - rowHeight
+      pos.y += screenSlideVal - rowHeight
       let grid = {x: Math.floor(pos.x/colWidth + 0.5), y: Math.floor(pos.y/rowHeight + 0.5)}
       return grid
     }
     const gridToAdderPos = (grid) => {
       let pos = {x: grid.x*colWidth, y: grid.y*rowHeight}
-      pos.y -= Dimensions.get('window').height - rowHeight
+      pos.y -= screenSlideVal - rowHeight
       return pos
     }
 
@@ -237,7 +253,7 @@ export default function SnapGrid(props) {
       console.log(adderGrid.x, adderGrid.y)
       let screenGrid = adderPosToGrid({x: x - adderPosition.current, y})
       screenGrid.y += 1 - snap.size.y
-      if (y + Dimensions.get('window').width/2.5 > 0) {
+      if (y + screenWidth/2.5 > 0) {
         snap.snapToPos(snap.pos)
       }
       else {
@@ -249,7 +265,7 @@ export default function SnapGrid(props) {
       }
     }
 
-    const [adderPosition, setAdderPosition] = React.useState({current: Dimensions.get('window').width})
+    const [adderPosition, setAdderPosition] = React.useState({current: screenWidth})
     let snapAdder = null
     if (props.editing) {
       let id = Math.max(...Object.keys(actionLayout)) + 6
@@ -268,11 +284,11 @@ export default function SnapGrid(props) {
               adderPosition.current = e.nativeEvent.contentOffset.x
             }}
             scrollEventThrottle={0.5}
-            contentOffset={{x: Dimensions.get('window').width, y: 0}}
+            contentOffset={{x: screenWidth, y: 0}}
             scrollEnabled={props.scrollEnabled}
             horizontal={true}
             contentContainerStyle={{
-              height: Dimensions.get('window').width/2.5,
+              height: screenWidth/2.5,
               alignSelf: 'flex-end',
               backgroundColor:Colors['dark'].primary,
             }}
@@ -281,8 +297,8 @@ export default function SnapGrid(props) {
             <View style={{
               backgroundColor:Colors['dark'].primary,
               justifyContent: 'flex-end',
-              height: Dimensions.get('window').width/2.5,
-              width: Dimensions.get('window').width*3,
+              height: screenWidth/2.5,
+              width: screenWidth*3,
             }}>
               {getSnapsFromLayout(snapOptions, false, addToGrid)}
             </View>
@@ -301,12 +317,22 @@ export default function SnapGrid(props) {
     ) : null
 
     return (
-      <View style={{width:Dimensions.get('window').width, height:rowHeight*numRows}}>
+      <View style={{width: Dimensions.get('window').width, height: screenSlideVal*Dimensions.get('window').width/screenWidth}}>
+      <View style={{
+        width:screenWidth,
+        height:screenSlideVal,
+        transform: [
+          {translateX: (Dimensions.get('window').width - screenWidth)/2},
+          {translateY: (-0.5)*screenSlideVal*(1-(Dimensions.get('window').width/screenWidth))},
+          {scale: Dimensions.get('window').width/screenWidth}
+        ]
+      }}>
         <View style={{alignSelf:'flex-end'}}>
           {snapAdder}
         </View>
         {getSnapsFromLayout(actionLayout, props.editing,(r, x, y) => {preOnRelease(r, x, y)})}
         {deleteIcon}
+      </View>
       </View>
     )
 

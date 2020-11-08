@@ -7,6 +7,13 @@ import Colors from '../constants/Colors.ts';
 import { Ionicons } from '@expo/vector-icons';
 import useColorScheme from '../hooks/useColorScheme';
 import oofReact from '../assets/images/oof.png';
+import komReact from '../assets/images/kombucha.png';
+import tudReact from '../assets/images/ThumbsUpDrake.png';
+import tddReact from '../assets/images/ThumbsDownDrake.png';
+import ccrReact from '../assets/images/CatCry.png';
+import cwoReact from '../assets/images/ChrisWow.png';
+import lolReact from '../assets/images/Lol.png';
+import lvmReact from '../assets/images/LoveMeme.png';
 
 export default function ReactionPanel(props) {
   if (props.pos == null) return null
@@ -56,7 +63,7 @@ export default function ReactionPanel(props) {
     <TouchableOpacity
       activeOpacity={1}
       style={{backroundColor: 'black', width: '100%', height:'100%'}}
-      onPressIn={() => {
+      onPress={() => {
         Animated.timing(panelScale, {
           toValue: 0,
           duration: 100,
@@ -73,25 +80,28 @@ export default function ReactionPanel(props) {
         </TouchableOpacity>
         <View style={styles.emojiContainer}>
           <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('😍')}>
-            <Text style={styles.reactionEmoji}>😍</Text>
+            <Image style={styles.oof} source={lvmReact}/>
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('😂')}>
-            <Text style={styles.reactionEmoji}>😂</Text>
+            <Image style={styles.oof} source={lolReact}/>
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('😎')}>
-            <Text style={styles.reactionEmoji}>😎</Text>
+            <Image style={styles.oof} source={cwoReact}/>
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('😭')}>
-            <Text style={styles.reactionEmoji}>😭</Text>
+            <Image style={styles.oof} source={ccrReact}/>
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('oof')}>
             <Image style={styles.oof} source={oofReact}/>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('kombucha')}>
+            <Image style={styles.oof} source={komReact}/>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('👍')}>
-            <Text style={styles.reactionEmoji}>👍</Text>
+            <Image style={styles.oof} source={tudReact}/>
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('👎')}>
-            <Text style={styles.reactionEmoji}>👎</Text>
+            <Image style={styles.oof} source={tddReact}/>
           </TouchableOpacity>
         </View>
         <TouchableOpacity style={styles.roundContainer} onPress={props.morePressed}>
@@ -145,5 +155,6 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
+    margin:3,
   }
 });

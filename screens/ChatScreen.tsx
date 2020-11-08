@@ -19,6 +19,13 @@ import ReactionsDisplay from '../components/ReactionDisplay';
 import TurnTracker from '../components/TurnTracker';
 import AutoComplete from '../components/AutoComplete';
 import oofReact from '../assets/images/oof.png';
+import komReact from '../assets/images/kombucha.png';
+import tudReact from '../assets/images/ThumbsUpDrake.png';
+import tddReact from '../assets/images/ThumbsDownDrake.png';
+import ccrReact from '../assets/images/CatCry.png';
+import cwoReact from '../assets/images/ChrisWow.png';
+import lolReact from '../assets/images/Lol.png';
+import lvmReact from '../assets/images/LoveMeme.png';
 
 
 export default function ChatScreen(props) {
@@ -133,8 +140,7 @@ export default function ChatScreen(props) {
   }
 
 	const renderActions = (props) => {
-    return (
-      <View style={styles.action}>
+    return ( <View style={styles.action}>
         <TouchableOpacity 
 					onPress={async () => {
 						let image = await ImagePicker.pickImage()
@@ -333,11 +339,37 @@ export default function ChatScreen(props) {
       riStyle = styles.reactionsIndicatorRight
     }
 		let oofs = []
-    if (reactionText.includes("oof")) {
-			while(reactionText.includes("oof")) {
-				reactionText = reactionText.replace("oof", "")
-				oofs.push(<Image key={Math.random()} style={styles.oof} source={oofReact}/>)
-			}
+    while(reactionText.includes("oof")) {
+      reactionText = reactionText.replace("oof", "")
+      oofs.push(<Image key={Math.random()} style={styles.oof} source={oofReact}/>)
+    }
+    while(reactionText.includes("kombucha")) {
+      reactionText = reactionText.replace("kombucha", "")
+      oofs.push(<Image key={Math.random()} style={styles.oof} source={komReact}/>)
+    }
+    while(reactionText.includes("👍")) {
+      reactionText = reactionText.replace("👍", "")
+      oofs.push(<Image key={Math.random()} style={styles.oof} source={tudReact}/>)
+    }
+    while(reactionText.includes("👎")) {
+      reactionText = reactionText.replace("👎", "")
+      oofs.push(<Image key={Math.random()} style={styles.oof} source={tddReact}/>)
+    }
+    while(reactionText.includes("😭")) {
+      reactionText = reactionText.replace("😭", "")
+      oofs.push(<Image key={Math.random()} style={styles.oof} source={ccrReact}/>)
+    }
+    while(reactionText.includes("😎")) {
+      reactionText = reactionText.replace("😎", "")
+      oofs.push(<Image key={Math.random()} style={styles.oof} source={cwoReact}/>)
+    }
+    while(reactionText.includes("😂")) {
+      reactionText = reactionText.replace("😂", "")
+      oofs.push(<Image key={Math.random()} style={styles.oof} source={lolReact}/>)
+    }
+    while(reactionText.includes("😍")) {
+      reactionText = reactionText.replace("😍", "")
+      oofs.push(<Image key={Math.random()} style={styles.oof} source={lvmReact}/>)
     }
     return (
       <TouchableOpacity
@@ -619,13 +651,13 @@ const styles = StyleSheet.create({
   },
 	action: {
     flexDirection: 'row',
-    width: 60,
+    width: 80,
     height: 40,
     alignItems: 'center',
     justifyContent: 'flex-start',
+    alignSelf: 'flex-start',
     paddingLeft: 10,
     paddingRight: 10,
-    marginLeft: -100,
     backgroundColor: Colors['dark'].primaryDark,
   },
   accessory: {
@@ -769,6 +801,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
+    margin:3,
   }
 });
 

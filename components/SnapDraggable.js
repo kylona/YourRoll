@@ -75,7 +75,7 @@ export default function SnapDraggable(props) {
           props.onMove(snapObject(), val.x, val.y, pageX, pageY)
         }
         Animated.event(
-          [false, { dx: pan.x, dy: pan.y }],
+          [null, { dx: pan.x, dy: pan.y }],
           {useNativeDriver: false})(e, gesture)
       },
 			onPanResponderReject: (e, gesture) => {

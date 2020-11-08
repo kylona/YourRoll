@@ -9,8 +9,16 @@ import AppState from '../util/AppState';
 
 export default function MacroAdder(props) {
 
-	const [name, setName] = React.useState('')
-	const [value, setValue] = React.useState('')
+	const [name, setName] = React.useState(null)
+	const [value, setValue] = React.useState(null)
+  const [oldName, setOldName] = React.useState(props.name)
+  const [oldValue, setOldValue] = React.useState(props.value)
+  if (oldName != props.name || oldValue != props.value) {
+    setOldName(props.name)
+    setName(props.name)
+    setOldValue(props.value)
+    setValue(props.value)
+  }
 
 
   return (
@@ -19,6 +27,7 @@ export default function MacroAdder(props) {
         <TextInput
           //defaultValue={}
           placeholder={"Macro Name..."}
+          defaultValue={name}
           placeholderTextColor={Colors['dark'].textLight}
           style={styles.inputText}
           onChangeText={(text) => {
@@ -30,6 +39,7 @@ export default function MacroAdder(props) {
         <TextInput
           //defaultValue={AppState.shared.character.name}
           placeholder={"Macro Value..."}
+          defaultValue={value}
           placeholderTextColor={Colors['dark'].textLight}
           style={styles.inputText}
           onChangeText={(text) => {
@@ -40,10 +50,15 @@ export default function MacroAdder(props) {
 			<TouchableOpacity
 				style={styles.macroAddButton}
 				onPress={ () => {
-					if (name != '' && value != '') {
-            let cleanName = name.replace("#", "").replace(" ", "").trim()
-						AppState.shared.macros[cleanName] = value
-						AppState.shared.saveState()
+          let newName = name == null ? props.name : name
+          let newValue = value == null ? props.value : value
+					if (newName != '' && newValue != '') {
+            let cleanName = newName.replace("#", "").replace(" ", "").trim()
+            let newMacro = {
+              name: cleanName,
+              value: newValue,
+            }
+            Fire.shared.sendMacro(newMacro)
 					}
 				}}
 			>

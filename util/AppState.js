@@ -202,6 +202,22 @@ class AppState {
     AppState.shared[AppState.shared.tables.active.id].users = value
   }
 
+  onMacro(macro) {  
+    AppState.shared.macros[macro.name] = macro.value
+    AppState.shared.saveState()
+  }
+
+  onMacroDelete(macro) {
+      delete AppState.shared.macros[macro.name]
+      AppState.shared.saveState()
+  }
+
+
+  onMacroUpdate(macro) {
+      AppState.shared.macros[macro.name] = macro.value
+      AppState.shared.saveState()
+  }
+
   onMessage(message) {  
     AppState.shared.lastReadMessage = message
     const cacheImages = async () => {
@@ -511,6 +527,9 @@ class AppState {
       Fire.shared.onMessageReceived(latestMessage, AppState.shared.onMessage)
       Fire.shared.onMessageUpdated(AppState.shared.onMessageUpdate)
       Fire.shared.onMessageDeleted(AppState.shared.onMessageDelete)
+      Fire.shared.onMacroReceived(latestMessage, AppState.shared.onMacro)
+      Fire.shared.onMacroUpdated(AppState.shared.onMacroUpdate)
+      Fire.shared.onMacroDeleted(AppState.shared.onMacroDelete)
       Fire.shared.onTableNameChanged(AppState.shared.onTableNameChange)
       Fire.shared.onMap(AppState.shared.onMap)
       Fire.shared.onPinnedMessage(AppState.shared.onPinnedMessage)
@@ -575,6 +594,9 @@ class AppState {
     Fire.shared.onMessageReceived(latestMessage, AppState.shared.onMessage)
     Fire.shared.onMessageUpdated(AppState.shared.onMessageUpdate)
     Fire.shared.onMessageDeleted(AppState.shared.onMessageDelete)
+    Fire.shared.onMacroReceived(latestMessage, AppState.shared.onMacro)
+    Fire.shared.onMacroUpdated(AppState.shared.onMacroUpdate)
+    Fire.shared.onMacroDeleted(AppState.shared.onMacroDelete)
     Fire.shared.onTableNameChanged(AppState.shared.onTableNameChange)
     Fire.shared.onMap(AppState.shared.onMap)
     Fire.shared.onPinnedMessage(AppState.shared.onPinnedMessage)

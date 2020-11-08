@@ -15,6 +15,8 @@ import MacroAdder from '../components/MacroAdder';
 export default function MacroScreen(props) {
 
   const [scrollEnabled, setScrollEnabled] = React.useState(true)
+  const [macroName, setMacroName] = React.useState("")
+  const [macroValue, setMacroValue] = React.useState("")
   const [macros, setMacros] = React.useState(AppState.shared.macros)
 
   React.useEffect(() => {
@@ -27,23 +29,35 @@ export default function MacroScreen(props) {
 
   let macroItems = []
   macroItems.push(
-    <MacroAdder/>
+    <MacroAdder
+      name={macroName}
+      value={macroValue}
+    />
   )
   for (let m in macros) {
     let mapsTo = macros[m]
     macroItems.push( 
+       <TouchableOpacity 
+        onPress={() => {
+          setMacroName(m)
+          setMacroValue(mapsTo)
+        }}>
        <View key={m} style={styles.snapFront}>
          <Text style={styles.macroText}>{m + " → " + mapsTo}</Text> 
          <TouchableOpacity 
            style={styles.macroDeleteButton}
            onPress={ () => {
-             delete AppState.shared.macros[m]
-             AppState.shared.saveState()
+             let toDelete = {
+               name: m,
+               value: mapsTo,
+             }
+             Fire.shared.deleteMacro(toDelete)
            }}
          >
            <Ionicons name='md-close-circle' size={30} color={Colors['dark'].textDark}/>
          </TouchableOpacity>
        </View>
+       </TouchableOpacity>
     )
   }
   return (

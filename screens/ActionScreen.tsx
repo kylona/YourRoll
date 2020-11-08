@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { TouchableOpacity, RefreshControl, Keyboard, StyleSheet, Text, TextInput, View, Image, AsyncStorage, Linking } from 'react-native';
-import { ScrollView } from 'react-native-gesture-handler';
+import { TouchableOpacity, RefreshControl, Keyboard, StyleSheet, ScrollView, Text, TextInput, View, Image, AsyncStorage, Linking } from 'react-native';
 import GestureRecognizer, {swipeDirections} from 'react-native-swipe-gestures';
 import SnapGrid from '../components/SnapGrid.js';
 import Fire from '../util/Fire';
@@ -15,8 +14,6 @@ import StatText from '../components/snaps/StatText';
 
 export default function ActionScreen(props) {
 
-  const numColumns = 6
-  const numRows = 20
   const navigation = props.navigation
   const [scrollEnabled, setScrollEnabled] = React.useState(true)
 
@@ -38,8 +35,6 @@ export default function ActionScreen(props) {
 			scrollEnabled={scrollEnabled}
 		>
 			<SnapGrid 
-				numRows={numRows}
-				numColumns={numColumns}
 				onGrab={() => {setScrollEnabled(false)}}
 				onRelease={() => { setScrollEnabled(true);}}
         onUpdate={(newItems) => {
@@ -73,6 +68,7 @@ const styles = StyleSheet.create({
 		height: '100%',
   },
   scroll: {
+    flex: 1,
 		width: '100%',
 		height: '100%',
     backgroundColor: Colors['dark'].primaryDark,

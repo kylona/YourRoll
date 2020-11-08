@@ -7,6 +7,13 @@ import Colors from '../constants/Colors.ts';
 import { Ionicons } from '@expo/vector-icons';
 import useColorScheme from '../hooks/useColorScheme';
 import oofReact from '../assets/images/oof.png';
+import komReact from '../assets/images/kombucha.png';
+import tudReact from '../assets/images/ThumbsUpDrake.png';
+import tddReact from '../assets/images/ThumbsDownDrake.png';
+import ccrReact from '../assets/images/CatCry.png';
+import cwoReact from '../assets/images/ChrisWow.png';
+import lolReact from '../assets/images/Lol.png';
+import lvmReact from '../assets/images/LoveMeme.png';
 
 export default function ReactionDisplay(props) {
   if (props.pos == null || props.reactions== null) return null
@@ -49,11 +56,41 @@ export default function ReactionDisplay(props) {
 
   let reactionDisplay = []
   for (let r in props.reactions) {
+    let reactImage = null
+    let reactionText = props.reactions[r].reaction
+		if(reactionText.includes("oof")) {
+      reactionImage = (<Image key={Math.random()} style={styles.oof} source={oofReact}/>)
+    }
+    else if (reactionText.includes("kombucha")) {
+      reactionImage = (<Image key={Math.random()} style={styles.oof} source={komReact}/>)
+    }
+    else if(reactionText.includes("👍")) {
+      reactionImage = (<Image key={Math.random()} style={styles.oof} source={tudReact}/>)
+    }
+    else if(reactionText.includes("👎")) {
+      reactionImage = (<Image key={Math.random()} style={styles.oof} source={tddReact}/>)
+    }
+    else if(reactionText.includes("😭")) {
+      reactionImage = (<Image key={Math.random()} style={styles.oof} source={ccrReact}/>)
+    }
+    else if(reactionText.includes("😎")) {
+      reactionImage = (<Image key={Math.random()} style={styles.oof} source={cwoReact}/>)
+    }
+    else if (reactionText.includes("😂")) {
+      reactionImage = (<Image key={Math.random()} style={styles.oof} source={lolReact}/>)
+    }
+    else if(reactionText.includes("😍")) {
+      reactionImage = (<Image key={Math.random()} style={styles.oof} source={lvmReact}/>)
+    }
+    else {
+      reactionImage = <Text style={styles.reactionEmoji}>{props.reactions[r].reaction}</Text>
+    }
+    <Image key={Math.random()} style={styles.oof} source={oofReact}/>
     reactionDisplay.push(
-      <View key={r} style={{width: '100%', flexDirection:'row', alignItems:'center'}}>
+      <View key={r} style={{width: '100%', flexDirection:'row', alignItems:'center', justifyContent:'center',}}>
         <Image style={styles.avatar} source={{uri: props.reactions[r].user.avatar}}/>
-        <Text style={{...styles.label, alignSelf:'flex-start'}}>{props.reactions[r].user.name}</Text>
-        <Text style={styles.reactionEmoji}>{props.reactions[r].reaction}</Text>
+        <Text style={{...styles.label, alignSelf:'center', flex: 1}}>{props.reactions[r].user.name}</Text>
+        {reactionImage}
       </View>
     )
   }
@@ -64,7 +101,7 @@ export default function ReactionDisplay(props) {
     <TouchableOpacity
       activeOpacity={1}
       style={{backroundColor: 'black', width: '100%', height:'100%'}}
-      onPressIn={() => {
+      onPress={() => {
         Animated.timing(panelScale, {
           toValue: 0,
           duration: 100,
@@ -144,5 +181,14 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     margin: 5,
     marginRight: 10,
+    alignSelf: 'center',
+  },
+  oof: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    margin: 5,
+    marginRight: 10,
+    alignSelf: 'center',
   }
 });

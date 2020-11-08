@@ -73,6 +73,10 @@ class Fire {
     return this.database.ref(Fire.shared.tableId).child('tokens');
   }
 
+  get macros() {
+    return this.database.ref(Fire.shared.tableId).child('macros');
+  }
+
   get users() {
     return this.database.ref(Fire.shared.tableId).child('users');
   }
@@ -98,6 +102,18 @@ class Fire {
     return Date.now();
   }
 
+  onMacroReceived = (latest, callback) => {
+    this.macros.on('child_added', snapshot => callback(snapshot.val()));
+  }
+
+  onMacroUpdated = callback => {
+    this.macros.on('child_changed', snapshot => callback(snapshot.val()));
+  }
+
+  onMacroDeleted = callback => {
+    this.macros.on('child_removed', snapshot => callback(snapshot.val()));
+  }
+
   onMessageReceived = (latest, callback) => {
     if (false && latest != null) {
       this.messages
@@ -108,7 +124,7 @@ class Fire {
     else {
       this.messages
         .orderByChild('timestamp')
-        .limitToLast(50)
+        .limitToLast(20)
         .on('child_added', snapshot => callback(this.parseMessage(snapshot)));
     }
   }
@@ -165,7 +181,6 @@ class Fire {
 
   // send the message to the Backend
   sendMessages = messages => {
-    console.log("Table id is: " + Fire.shared.tableId)
     for (let m in messages) {
       this.messages.child(messages[m].id).set(messages[m])
     }
@@ -221,6 +236,14 @@ class Fire {
 
   sendToken = token => {
     this.tokens.child(token.name).set(token)
+  }
+
+  sendMacro = macro => {
+    this.macros.child(macro.name).set(macro)
+  }
+
+  deleteMacro = macro => {
+    this.macros.child(macro.name).remove()
   }
 
   removeToken = token => {
