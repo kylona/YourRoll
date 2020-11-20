@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { Animated, StyleSheet } from 'react-native';
+import { Animated, StyleSheet, View, Image } from 'react-native';
 import { TypingAnimation } from 'react-native-typing-animation';
 import { useUpdateLayoutEffect } from './hooks/useUpdateLayoutEffect';
-import Color from './Color';
+import Colors from '../../constants/Colors';
+import Fire from '../../util/Fire.js';
 const TypingIndicator = ({ isTyping }) => {
     const { yCoords, heightScale, marginScale } = React.useMemo(() => ({
         yCoords: new Animated.Value(200),
@@ -11,7 +12,7 @@ const TypingIndicator = ({ isTyping }) => {
     }), []);
     // on isTyping fire side effect
     useUpdateLayoutEffect(() => {
-        if (isTyping) {
+        if (isTyping != {}) {
             slideIn();
         }
         else {
@@ -26,7 +27,7 @@ const TypingIndicator = ({ isTyping }) => {
                 useNativeDriver: false,
             }),
             Animated.timing(heightScale, {
-                toValue: 35,
+                toValue: 20,
                 duration: 250,
                 useNativeDriver: false,
             }),
@@ -56,27 +57,45 @@ const TypingIndicator = ({ isTyping }) => {
             }),
         ]).start();
     };
-    return (<Animated.View style={[
-        styles.container,
-        {
-            transform: [
-                {
-                    translateY: yCoords,
-                },
-            ],
-            height: heightScale,
-            marginBottom: marginScale,
-        },
-    ]}>
-      {isTyping ? (<TypingAnimation style={{ marginLeft: 6, marginTop: 7.2 }} dotRadius={4} dotMargin={5.5} dotColor={'rgba(0, 0, 0, 0.38)'}/>) : null}
-    </Animated.View>);
+    const renderTyping = (isTyping) => {
+      let typeViews = []
+      for (let t in isTyping) {
+        if (t == Fire.shared.uid) continue
+        let typer = isTyping[t]
+        typeViews.push(
+          <Animated.View style={[
+            styles.container,
+            {
+                transform: [
+                    {
+                        translateY: yCoords,
+                    },
+                ],
+                height: heightScale,
+                marginBottom: marginScale,
+            },
+          ]}>
+          <Image style={styles.avatar} source={{uri: typer}}/>
+          <TypingAnimation style={{ marginLeft: 0 , marginTop: 1 }} dotRadius={3} dotMargin={5.5} dotColor={Colors['dark'].textDark}/>
+          </Animated.View>
+        )
+      }
+      return <View style={{flexDirection:'row',}}>{typeViews}</View>
+    }
+    return (renderTyping(isTyping))
 };
 const styles = StyleSheet.create({
     container: {
         marginLeft: 8,
-        width: 45,
+        width: 55,
         borderRadius: 15,
-        backgroundColor: Color.leftBubbleBackground,
+        backgroundColor: Colors['dark'].primaryLight,
+        flexDirection: 'row',
+    },
+    avatar: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
     },
 });
 export default TypingIndicator;

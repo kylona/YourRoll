@@ -39,6 +39,7 @@ class AppState {
     appState[tableId].map = undefined
     appState[tableId].pinnedMessage = "Pinned Message"
     appState[tableId].unreadMessages = 0
+    appState[tableId].typing = {}
     appState[tableId].macros = {
       strsave: 'Str Save: 1d20 + $dexsave',
       dexsave: 'Dex Save: 1d20 + $dexsave',
@@ -157,6 +158,13 @@ class AppState {
     AppState.shared[AppState.shared.tables.active.id].macros = value
   }
 
+  get typing() {
+    return AppState.shared[AppState.shared.tables.active.id].typing
+  }
+  set typing(value) {
+    AppState.shared[AppState.shared.tables.active.id].typing = value
+  }
+
   get messages() {
     return AppState.shared[AppState.shared.tables.active.id].messages
   }
@@ -200,6 +208,19 @@ class AppState {
 
   set users(value) {
     AppState.shared[AppState.shared.tables.active.id].users = value
+  }
+
+  async onTyping(typing) {  
+    if (!AppState.shared.typing) {
+      AppState.shared.typing = {}
+    }
+    AppState.shared.typing[typing.id] = await BlobCache.shared.get(typing.avatar)
+    AppState.shared.saveState()
+  }
+
+  onTypingDelete(typing) {
+      delete AppState.shared.typing[typing.id]
+      AppState.shared.saveState()
   }
 
   onMacro(macro) {  
@@ -527,9 +548,11 @@ class AppState {
       Fire.shared.onMessageReceived(latestMessage, AppState.shared.onMessage)
       Fire.shared.onMessageUpdated(AppState.shared.onMessageUpdate)
       Fire.shared.onMessageDeleted(AppState.shared.onMessageDelete)
-      Fire.shared.onMacroReceived(latestMessage, AppState.shared.onMacro)
+      Fire.shared.onMacroReceived(AppState.shared.onMacro)
       Fire.shared.onMacroUpdated(AppState.shared.onMacroUpdate)
       Fire.shared.onMacroDeleted(AppState.shared.onMacroDelete)
+      Fire.shared.onTypingReceived(AppState.shared.onTyping)
+      Fire.shared.onTypingDeleted(AppState.shared.onTypingDelete)
       Fire.shared.onTableNameChanged(AppState.shared.onTableNameChange)
       Fire.shared.onMap(AppState.shared.onMap)
       Fire.shared.onPinnedMessage(AppState.shared.onPinnedMessage)
@@ -594,9 +617,11 @@ class AppState {
     Fire.shared.onMessageReceived(latestMessage, AppState.shared.onMessage)
     Fire.shared.onMessageUpdated(AppState.shared.onMessageUpdate)
     Fire.shared.onMessageDeleted(AppState.shared.onMessageDelete)
-    Fire.shared.onMacroReceived(latestMessage, AppState.shared.onMacro)
+    Fire.shared.onMacroReceived(AppState.shared.onMacro)
     Fire.shared.onMacroUpdated(AppState.shared.onMacroUpdate)
     Fire.shared.onMacroDeleted(AppState.shared.onMacroDelete)
+    Fire.shared.onTypingReceived(AppState.shared.onTyping)
+    Fire.shared.onTypingDeleted(AppState.shared.onTypingDelete)
     Fire.shared.onTableNameChanged(AppState.shared.onTableNameChange)
     Fire.shared.onMap(AppState.shared.onMap)
     Fire.shared.onPinnedMessage(AppState.shared.onPinnedMessage)

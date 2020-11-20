@@ -13,6 +13,7 @@ export default class AppStateUpdater {
     for (table of appState.tables.list) {
       appState[table.id].users = [] 
       appState[table.id].macros['initiative'] = 'Initiative: 1d20 + $dexmod'
+      appState[table.id].typing = {}
     }
     console.log("Updated State", appState)
     return appState

@@ -147,8 +147,11 @@ export default function SnapDraggable(props) {
   const onLetGo = () => {
     setDraggable(false)
   }
-  let frontView = props.renderFront(grabOnLongPress, onLetGo)
-  let backView = props.renderBack(grabOnLongPress, onLetGo)
+  const onResize = (x, y) => {
+    console.log("Resize")
+  }
+  let frontView = props.renderFront(grabOnLongPress, onLetGo, onResize)
+  let backView = props.renderBack(grabOnLongPress, onLetGo, onResize)
   let view = flipped ? backView : frontView 
   let handle = (
     <TouchableOpacity activeOpacity={1} style={styles.handle}
@@ -173,6 +176,10 @@ export default function SnapDraggable(props) {
       delayLongPress={50}
       //onPressOut={onLetGo}
       onLongPress={grabOnLongPress}
+			onContentSizeChange={(e) => {
+        let height = e.nativeEvent.contentSize.height
+        console.log(height)
+			}}
     >
       {view}
     </TouchableOpacity>

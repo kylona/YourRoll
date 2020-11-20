@@ -1,6 +1,13 @@
 import Fire from './Fire.js'
 export default class ObjectFactory {
 
+  static createTyping(appstate) {
+    return {
+      id: Fire.shared.uid,
+      avatar: appstate.character.avatar,
+    }
+  }
+
   static createToken(image) {
     const name = 'Token_' + Math.random().toString(36).substr(2,9)
     return {

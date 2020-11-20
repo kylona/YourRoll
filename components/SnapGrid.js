@@ -4,6 +4,7 @@ import { StyleSheet, ScrollView, View, PanResponder, Animated, Dimensions, Text,
 import GestureRecognizer, {swipeDirections} from 'react-native-swipe-gestures';
 import SnapDraggable from '../components/SnapDraggable.js';
 import StatText from '../components/snaps/StatText';
+import TextBox from '../components/snaps/TextBox';
 import SnapAvatar from '../components/snaps/SnapAvatar';
 import AppState from '../util/AppState';
 import Colors from '../constants/Colors';
@@ -15,7 +16,7 @@ export default function SnapGrid(props) {
     const extraVisibleRows = 4
     for (snapId in actionLayout) {
       let snap = actionLayout[snapId]
-      if (numRows < snap.grid.y + extraVisibleRows) numRows = snap.grid.y + extraVisibleRows
+      if (numRows < snap.grid.y + snap.size.y + extraVisibleRows) numRows = snap.grid.y + snap.size.y+ extraVisibleRows
     }
     const screenWidth = 500 //Dimensions.get('window').width
     const colWidth = screenWidth / numColumns
@@ -190,6 +191,34 @@ export default function SnapGrid(props) {
             />)
           }
           break
+          case "TextBox":
+          renderFront = (onLongPress, onPressOut) => {
+          return (
+            <TextBox
+              back={false}
+              display={item.display}
+              onDisplayChange={(text) => {
+                layout[id].display = text
+                AppState.shared.saveState()
+              }}
+              onLongPress={onLongPress}
+              onPressOut={onPressOut}
+            />)
+          }
+          renderBack = (onLongPress, onPressOut) => {
+          return (
+            <TextBox
+              back={true}
+              display={item.display}
+              onDisplayChange={(text) => {
+                layout[id].display = text
+                AppState.shared.saveState()
+              }}
+              onLongPress={onLongPress}
+              onPressOut={onPressOut}
+            />)
+          }
+          break
           case "Avatar":
           renderFront = (onLongPress, onPressOut) => {
           return (
@@ -268,7 +297,7 @@ export default function SnapGrid(props) {
     const [adderPosition, setAdderPosition] = React.useState({current: screenWidth})
     let snapAdder = null
     if (props.editing) {
-      let id = Math.max(...Object.keys(actionLayout)) + 6
+      let id = Math.max(...Object.keys(actionLayout)) + 7
       console.log(id)
 			let snapOptions = {}
       snapOptions[id++] = ( {grid: {x: 0, y: 0}, size: {x:6, y:1}, type:"SnapText", display:"Stat:$X"})
@@ -277,6 +306,7 @@ export default function SnapGrid(props) {
       snapOptions[id++] = ( {grid: {x: 11, y: 0}, size: {x:4, y:1}, type:"SnapText", display:"Stat:$X"})
       snapOptions[id++] = ( {grid: {x: 15, y: 0}, size: {x:1, y:1}, type:"SnapText", display:"$X"})
       snapOptions[id++] = ( {grid: {x: 16, y: 0}, size: {x:2, y:2}, type:"Avatar"})
+      snapOptions[id++] = ( {grid: {x: 18, y: 0}, size: {x:4, y:2}, type:"TextBox", display:"A place to store text"})
       snapAdder = (
           <ScrollView
             snapToInterval={colWidth}
@@ -298,7 +328,7 @@ export default function SnapGrid(props) {
               backgroundColor:Colors['dark'].primary,
               justifyContent: 'flex-end',
               height: screenWidth/2.5,
-              width: screenWidth*3,
+              width: 22*colWidth,
             }}>
               {getSnapsFromLayout(snapOptions, false, addToGrid)}
             </View>

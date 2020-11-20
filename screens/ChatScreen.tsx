@@ -11,7 +11,8 @@ import AppState from '../util/AppState';
 import MessageParser from '../util/MessageParser';
 import BlobCache from '../util/BlobCache';
 import useColorScheme from '../hooks/useColorScheme';
-import { GiftedChat, Bubble, Message, Composer, InputToolbar, Send } from '../components/ChatUI';
+import { GiftedChat, Bubble, Message, Composer, InputToolbar, Send} from '../components/ChatUI';
+import TypingIndicator from '../components/ChatUI/TypingIndicator.js'
 import { Ionicons } from '@expo/vector-icons';
 import GestureRecognizer, {swipeDirections} from 'react-native-swipe-gestures';
 import ReactionsPanel from '../components/ReactionPanel';
@@ -34,6 +35,7 @@ export default function ChatScreen(props) {
 	const [attachedReply, attachReply] = React.useState(null)
 	const [messages, setMessages] = React.useState([...AppState.shared.messages])
   const [users, setUsers] = React.useState([...AppState.shared.users])
+  const [typing, setTyping] = React.useState(AppState.shared.typing)
   const [selectedMessage, selectMessage] = React.useState(null)
   const [reactPanelPos, setReactPanelPos] = React.useState(null)
   const [reactDisplayPos, setReactDisplayPos] = React.useState(null)
@@ -46,9 +48,11 @@ export default function ChatScreen(props) {
     setKeyboardUp(true)
   }
   const keyboardDidShow = () => {
+    Fire.shared.sendTyping(ObjectFactory.createTyping(AppState.shared))
     setKeyboardUp(true)
   }
   const keyboardDidHide = () => {
+    Fire.shared.deleteTyping(ObjectFactory.createTyping(AppState.shared))
     setKeyboardUp(false)
   }
   const keyboardWillHide = () => {
@@ -59,6 +63,7 @@ export default function ChatScreen(props) {
     const unsubscribeFocus = props.navigation.addListener('focus', () => {
 			AppState.shared.unreadMessages = 0
       AppState.shared.notificationsEnabled = false
+      Fire.shared.deleteTyping(ObjectFactory.createTyping(AppState.shared))
       console.log("DISABLING NOTIFICATIONS")
     });
     const unsubscribeBlur = props.navigation.addListener('blur', () => {
@@ -78,6 +83,7 @@ export default function ChatScreen(props) {
     let unsubscribeAppState = AppState.shared.addListener(() => {
       setMessages([...AppState.shared.messages])
       setUsers([...AppState.shared.users])
+      setTyping({...AppState.shared.typing})
     })
     return () => {
       Fire.shared.offMessages()
@@ -493,7 +499,7 @@ export default function ChatScreen(props) {
       <View style={styles.inputField(accHeight)}>
         {autoComplete}
         {attachedReply}
-        <InputToolbar {...props} containerStyle={styles.inputBar}/>
+        <InputToolbar {...props} containerStyle={styles.inputBar} renderComposer={renderComposer}/>
       </View>
     )
   }
@@ -525,12 +531,17 @@ export default function ChatScreen(props) {
 				infiniteScroll={true}
 				renderActions={(props) => renderActions(props)}
 				renderInputToolbar={(props) => renderInputToolbar(props)}
-				renderComposer={renderComposer}
 				renderSend={renderSend}
 				renderMessage={(props) => renderMessage(props)}
 				renderMessageAudio={(props) => renderAudioBubble(props)}
 				renderBubble={(props) => renderBubble(props)}
-        bottomOffset={Platform.OS =='ios' ? 65 : -5}
+        bottomOffset={Platform.OS =='ios' ? 45 : -5}
+        renderFooter={() => {return (
+          <View style={{width:'100%', height:30}}>
+            <TypingIndicator isTyping={typing}/>
+          </View> 
+          )
+        }}
 				onLoadEarlier={async () => {
 					if(isLoading) return
 					setLoading(true)
@@ -686,7 +697,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 	send: {
-		marginRight: 80,
     backgroundColor: Colors['dark'].primaryDark,
   },
 	inputField: (accHeight) => {return( {

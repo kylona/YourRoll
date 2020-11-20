@@ -77,6 +77,10 @@ class Fire {
     return this.database.ref(Fire.shared.tableId).child('macros');
   }
 
+  get typing() {
+    return this.database.ref(Fire.shared.tableId).child('typing');
+  }
+
   get users() {
     return this.database.ref(Fire.shared.tableId).child('users');
   }
@@ -102,7 +106,7 @@ class Fire {
     return Date.now();
   }
 
-  onMacroReceived = (latest, callback) => {
+  onMacroReceived = (callback) => {
     this.macros.on('child_added', snapshot => callback(snapshot.val()));
   }
 
@@ -112,6 +116,14 @@ class Fire {
 
   onMacroDeleted = callback => {
     this.macros.on('child_removed', snapshot => callback(snapshot.val()));
+  }
+
+  onTypingReceived = (callback) => {
+    this.typing.on('child_added', snapshot => callback(snapshot.val()));
+  }
+
+  onTypingDeleted = callback => {
+    this.typing.on('child_removed', snapshot => callback(snapshot.val()));
   }
 
   onMessageReceived = (latest, callback) => {
@@ -238,6 +250,11 @@ class Fire {
     this.tokens.child(token.name).set(token)
   }
 
+  removeToken = token => {
+    this.tokens.child(token.name).remove()
+    //TODO delete image from storage
+  }
+
   sendMacro = macro => {
     this.macros.child(macro.name).set(macro)
   }
@@ -246,10 +263,14 @@ class Fire {
     this.macros.child(macro.name).remove()
   }
 
-  removeToken = token => {
-    this.tokens.child(token.name).remove()
-    //TODO delete image from storage
+  sendTyping = typing => {
+    this.typing.child(typing.id).set(typing)
   }
+
+  deleteTyping = typing => {
+    this.typing.child(typing.id).remove()
+  }
+
 
   // close the connection to the Backend
   offEverything = () => {
