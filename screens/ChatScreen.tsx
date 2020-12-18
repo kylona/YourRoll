@@ -369,7 +369,7 @@ export default function ChatScreen(props) {
       reactionText = reactionText.replace("😎", "")
       oofs.push(<Image key={Math.random()} style={styles.oof} source={cwoReact}/>)
     }
-    while(reactionText.includes("😂")) {
+    /*while(reactionText.includes("😂")) {
       reactionText = reactionText.replace("😂", "")
       oofs.push(<Image key={Math.random()} style={styles.oof} source={lolReact}/>)
     }
@@ -377,6 +377,7 @@ export default function ChatScreen(props) {
       reactionText = reactionText.replace("😍", "")
       oofs.push(<Image key={Math.random()} style={styles.oof} source={lvmReact}/>)
     }
+    */
     return (
       <TouchableOpacity
         style={riStyle}

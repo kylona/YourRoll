@@ -37,6 +37,8 @@ class AppState {
     appState[tableId].users = []
     appState[tableId].tokens = []
     appState[tableId].map = undefined
+    appState[tableId].remoteMap = undefined
+    appState[tableId].mapScale = 25
     appState[tableId].pinnedMessage = "Pinned Message"
     appState[tableId].unreadMessages = 0
     appState[tableId].typing = {}
@@ -340,15 +342,30 @@ class AppState {
 
 
     onMap = (map) => {
-      if (map == 'null') {
+      if (!map) return
+      let {image, scale, art, local} = map
+      if (art == null || art == undefined) {
+        art = []
+      }
+      else {
+        let newArt = []
+        for (stroke of art) {
+          newArt.push(JSON.parse(stroke))
+        }
+        art = newArt
+      }
+      if (image == 'null') {
         BlobCache.shared.get('https://i.imgur.com/cHLywwH.jpg').then((res) => {
-          AppState.shared.map = res 
+          image = 'https://i.imgur.com/cHLywwH.jpg'
+          local = res
+          AppState.shared.map = {image, scale, art, local}
           AppState.shared.saveState()
         })
       }
       else {
-        BlobCache.shared.get(map).then((res) => {
-          AppState.shared.map = res 
+        BlobCache.shared.get(image).then((res) => {
+          local = res
+          AppState.shared.map = {image, scale, art, local}
           AppState.shared.saveState()
         })
       }
@@ -370,6 +387,7 @@ class AppState {
       if (tIndex > -1) {
         AppState.shared.tokens[tIndex].x = token.x
         AppState.shared.tokens[tIndex].y = token.y
+        AppState.shared.tokens[tIndex].size = token.size
       }
       else {
         AppState.shared.tokens.push(token)
@@ -382,6 +400,7 @@ class AppState {
       if (tIndex > -1) {
         AppState.shared.tokens[tIndex].x = token.x
         AppState.shared.tokens[tIndex].y = token.y
+        AppState.shared.tokens[tIndex].size = token.size
       }
       else {
         AppState.shared.tokens.push(token)
@@ -487,7 +506,7 @@ class AppState {
       const jsonValue = await AsyncStorage.getItem('YourRollState')
       if (jsonValue != null) {
         let state = JSON.parse(jsonValue)
-        if (state.version != '0.08') {
+        if (state.version != '0.09') {
           state = AppStateUpdater.updateState(state)
         }
         if (state.player) {
@@ -573,7 +592,7 @@ class AppState {
     }
     let state = {
       tables: AppState.shared.tables,
-      version: '0.07',
+      version: '0.09',
       player: AppState.shared.player,
     }
     for (table of AppState.shared.tables.list) {

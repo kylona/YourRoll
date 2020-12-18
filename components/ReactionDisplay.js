@@ -76,12 +76,13 @@ export default function ReactionDisplay(props) {
     else if(reactionText.includes("😎")) {
       reactionImage = (<Image key={Math.random()} style={styles.oof} source={cwoReact}/>)
     }
-    else if (reactionText.includes("😂")) {
+    /*else if (reactionText.includes("😂")) {
       reactionImage = (<Image key={Math.random()} style={styles.oof} source={lolReact}/>)
     }
     else if(reactionText.includes("😍")) {
       reactionImage = (<Image key={Math.random()} style={styles.oof} source={lvmReact}/>)
     }
+    */
     else {
       reactionImage = <Text style={styles.reactionEmoji}>{props.reactions[r].reaction}</Text>
     }
@@ -156,7 +157,7 @@ const styles = StyleSheet.create({
   },
   reactionEmoji: {
     flex: 1,
-    fontSize: Platform.OS == 'ios' ? 21 : 18,
+    fontSize: Platform.OS == 'ios' ? 51 : 48,
     textAlign:'right',
     fontWeight: 'bold',
     color: Colors['dark'].textDark,

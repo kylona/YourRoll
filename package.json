@@ -35,7 +35,7 @@
     "firebase": "7.9.0",
     "mathjs": "^7.1.0",
     "react": "16.13.1",
-    "react-dom": "16.13.1",
+    "react-dom": "^17.0.1",
     "react-native": "https://github.com/expo/react-native/archive/sdk-39.0.3.tar.gz",
     "react-native-action-sheet": "^2.2.0",
     "react-native-communications": "^2.2.1",
@@ -48,7 +48,8 @@
     "react-native-svg": "12.1.0",
     "react-native-swipe-gestures": "^1.0.5",
     "react-native-typing-animation": "^0.1.7",
-    "react-native-web": "~0.13.7"
+    "react-native-web": "~0.11",
+    "rn-draw": "^0.0.6"
   },
   "devDependencies": {
     "@babel/core": "^7.8.6",

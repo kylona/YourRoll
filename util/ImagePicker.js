@@ -11,7 +11,7 @@ export default class ImagePicker {
     if (Constants.platform.ios) {
       const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
       if (status !== 'granted') {
-        alert('We need camera roll permissions so you can add an image to your message.');
+        alert('We need camera roll permissions so you can add an images to maps and messages.');
       }
     }
   }
@@ -21,6 +21,7 @@ export default class ImagePicker {
     let result = await default_ImagePicker.launchImageLibraryAsync({
       mediaTypes: default_ImagePicker.MediaTypeOptions.All,
       allowsEditing: false,
+      quality: 1,
     });
 
     if (!result.cancelled) {
@@ -36,7 +37,7 @@ export default class ImagePicker {
       mediaTypes: default_ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0,
+      quality: 0.2,
     });
 
     if (!result.cancelled) {

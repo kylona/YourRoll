@@ -6,16 +6,26 @@ import AppState from '../util/AppState';
 import Token from './Token';
 import TokenControls from '../components/TokenControls.js';
 import Colors from '../constants/Colors.ts';
+import RNDraw from '../components/draw';
+import Fire from '../util/Fire.js';
+import ObjectFactory from '../util/ObjectFactory.js';
+
 
 export default function TokenMap(props) {
   let {gridScale, onTokenUpdate } = props
+  let local = null
+  let art = null
+  if (AppState.shared.map) {
+    local = AppState.shared.map.local
+    art = AppState.shared.map.art
+  }
 
   const [tokens, setTokens] = React.useState(AppState.shared.tokens)
-  const [mapImage, setMap] = React.useState(AppState.shared.map)
+  const [mapImage, setMap] = React.useState(local)
 
   React.useEffect(() => {
     let unsubscribe = AppState.shared.addListener(() => {
-      setMap(AppState.shared.map)
+      setMap(AppState.shared.map.local)
       setTokens([...AppState.shared.tokens])
     })
     return unsubscribe
@@ -26,6 +36,7 @@ export default function TokenMap(props) {
   const [selectedName, setSelectedName] = React.useState(null)
   const [zoomLevel, setZoomLevel] = React.useState(1.3)
   const tokenViews = tokens.map(token => {
+    if (!token.size) token.size = 1
     return (
       <Token
         key={token.name+token.x+token.y}
@@ -35,7 +46,7 @@ export default function TokenMap(props) {
         yPos={token.y}
         sensitivity={Platform.OS == 'ios' ? 1 : 1/(zoomLevel**2)}
         image={token.image}
-        size={{x: gridScale, y: gridScale}}
+        size={{x: gridScale*token.size, y: gridScale*token.size}}
         onMove={(xPos, yPos) => {
           let index = tokens.findIndex((item) => {return item.name == token.name})
           tokens[index].x = xPos
@@ -66,6 +77,9 @@ export default function TokenMap(props) {
   const removeToken = (token) => {
     if (props.onTokenRemove) props.onTokenRemove(token)
   }
+  const updateToken = (token) => {
+    if (props.onTokenUpdate) props.onTokenUpdate(tokens, token)
+  }
 
   return(
       <View style={styles.scrollBox}>
@@ -83,14 +97,52 @@ export default function TokenMap(props) {
             onZoomEnd={(e, ges, zoom) => {
               setZoomLevel(zoom.zoomLevel)
             }}
+            onStartShouldSetPanResponder={(evt, gs) => {
+              if (gs.numberActiveTouches == 1) {
+                return !props.drawing
+              }
+              else {
+                return true
+              }
+            }}
+            onMoveShouldSetPanResponder={(evt, gs) => {
+              if (gs.numberActiveTouches == 1) {
+                return !props.drawing
+              }
+              else {
+                return true
+              }
+            }}
           >
             {tokenViews}
             <TokenControls
               token={findToken(selectedName)}
               scale={gridScale}
               removeToken={removeToken}
+              updateToken={updateToken}
+            />
+            <RNDraw
+              strokes={art}
+              containerStyle={{width: 418, height:800, backgroundColor: 'rgba(0,0,0,0.2)'}}
+              color={props.drawColor || '#FFFFFF'}
+              strokeWidth={4}
+              onChangeStrokes={(strokes) => {
+                if (strokes) {
+                  let strokesBlob = []
+                  for (let stroke of strokes) {
+                    let key = stroke.key
+                    let props = stroke.props
+                    strokesBlob.push(JSON.stringify({key, props}))
+                  }
+                  Fire.shared.sendMap(ObjectFactory.createMap(AppState.shared.map, {art: strokesBlob}))
+                }
+              }}
+              enabled={() => {return props.drawing}}
+              clear={props.clearDraw}
+              rewind={props.undoDraw}
             />
             <Image style={styles.image} source={{uri: mapImage }} resizeMode="contain"/>
+  
           </ReactNativeZoomableView>
       </View>
   );
@@ -135,6 +187,5 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     zIndex: -1,
-    marginLeft: '-40%',
   },
 });

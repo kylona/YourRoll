@@ -80,10 +80,10 @@ export default function ReactionPanel(props) {
         </TouchableOpacity>
         <View style={styles.emojiContainer}>
           <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('😍')}>
-            <Image style={styles.oof} source={lvmReact}/>
+            <Text style={styles.reactionEmoji}>😍</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('😂')}>
-            <Image style={styles.oof} source={lolReact}/>
+            <Text style={styles.reactionEmoji}>😂</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('😎')}>
             <Image style={styles.oof} source={cwoReact}/>

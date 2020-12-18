@@ -15,7 +15,8 @@ export default class ObjectFactory {
       image: image,
       x: 0,
       y: 0,
-      timestamp: Fire.shared.timestamp
+      timestamp: Fire.shared.timestamp,
+      size: 1,
     }
   }
 
@@ -24,6 +25,24 @@ export default class ObjectFactory {
     let message = ObjectFactory.createMessage(props)
     message.id = id
     return message 
+  }
+
+  static createMap(map, props) {
+    if (!map) {
+      return {
+        image: null,
+        scale: 25,
+        art: [],
+      }
+    }
+    if (!props.image) props.image = map.image || null
+    if (!props.scale) props.scale = map.scale || 25
+    if (!props.art) props.art = map.art || []
+    return {
+      image: props.image,
+      scale: props.scale,
+      art: props.art
+    }
   }
 
   static createTable(props) {

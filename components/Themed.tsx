@@ -44,7 +44,6 @@ export function Button(props) {
   const {icon, size, style} = props
 	const minDim = Math.min(size.x, size.y)
   const newStyle = {
-    ...style,
     width: size.x,
     height: size.y,
 		borderRadius: minDim/2,
@@ -59,6 +58,8 @@ export function Button(props) {
 		zIndex: 5,
 		justifyContent: 'center',
 		alignItems: 'center',
+    margin: 5,
+    ...style,
   }
   return (
 		<TouchableOpacity style={newStyle} onPress={props.onPress} onLongPress={props.onLongPress}>

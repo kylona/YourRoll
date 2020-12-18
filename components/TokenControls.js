@@ -7,6 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 const USE_NATIVE_DRIVER = true
 
 export default function TokenControls(props) {
+  if (!props.token) return null
+  if (!props.token.size) props.token.size = 1
 
   const TokenRoundButton = ({icon, color, backgroudColor, value, onPress, onLongPress=null, scale}) => {
     return(
@@ -35,8 +37,10 @@ export default function TokenControls(props) {
 	const tokenText = (gridScale) => {
 		return({
 			textAlign: 'center',
-			color: Colors['dark'].textDark,
+			color: Colors['dark'].textLight,
 			fontSize: gridScale/3,
+      opacity: 0.5,
+      backgroundColor: 'black',
 		})
 	}
 
@@ -48,13 +52,14 @@ export default function TokenControls(props) {
 			return({
 				flex: 0,
 				position: 'absolute',
-				transform: [{translateY:tokenY - props.scale*0.6},{translateX:tokenX + props.scale/4}],
+				transform: [{translateY:tokenY - props.scale*props.token.size},{translateX:tokenX + 145},{scale:props.scale/25*props.token.size},],
+        height: 100,
+        zIndex: 200,
 			})
 		}
     else return null
 	}
 
-  if (!props.token) return null
   return (
 		<View style={selectPanelStyle(props.token)}>
 			<TokenRoundButton 
@@ -62,9 +67,31 @@ export default function TokenControls(props) {
 				 color={Colors['dark'].textDark}
 				 backgroudColor={Colors['dark'].primary}
 				 value="Delete"
-				 scale={props.scale}
+				 scale={25}
 				 onPress={() => {props.removeToken(props.token)}}
 			/>
+      <View style={{
+          flexDirection: 'row',
+          width: 130,
+          marginTop: -25
+      }}>
+        <TokenRoundButton 
+           icon="ios-remove"
+           color={Colors['dark'].textDark}
+           backgroudColor={Colors['dark'].primary}
+           value="Smaller"
+           scale={25}
+           onPress={() => {props.updateToken({...props.token, size: props.token.size - 0.25})}}
+        />
+        <TokenRoundButton 
+           icon="ios-add"
+           color={Colors['dark'].textDark}
+           backgroudColor={Colors['dark'].primary}
+           value="Bigger"
+           scale={25}
+           onPress={() => {props.updateToken({...props.token, size: props.token.size + 0.25})}}
+        />
+      </View>
 		</View>
   );
 }
