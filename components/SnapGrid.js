@@ -14,7 +14,7 @@ export default function SnapGrid(props) {
     const numColumns = 6
     let numRows = 10
     const extraVisibleRows = 4
-    for (snapId in actionLayout) {
+    for (let snapId in actionLayout) {
       let snap = actionLayout[snapId]
       if (numRows < snap.grid.y + snap.size.y + extraVisibleRows) numRows = snap.grid.y + snap.size.y+ extraVisibleRows
     }

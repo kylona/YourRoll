@@ -27,7 +27,9 @@ export default function MapScreen() {
 
   React.useEffect(() => {
     return AppState.shared.addListener(() => {
-      setGridScale(AppState.shared.map.scale) 
+      if (AppState.shared.map) {
+        setGridScale(AppState.shared.map.scale) 
+      }
     })
   }, []);
 

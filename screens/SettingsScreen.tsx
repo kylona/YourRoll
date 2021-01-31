@@ -12,7 +12,7 @@ import ImagePicker from '../util/ImagePicker';
 import BlobCache from '../util/BlobCache';
 
 
-export default function CharacterSheetScreen(props) {
+export default function SettingScreen(props) {
 
   const [scrollEnabled, setScrollEnabled] = React.useState(true)
   const [characterStats, setCharacterStats] = React.useState(AppState.shared.character.stats) //code to remember characterStats
@@ -32,10 +32,26 @@ export default function CharacterSheetScreen(props) {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.contentContainer}
         scrollEnabled={scrollEnabled}
       >
-       <View style={{...styles.snapFront, height: 60}}>
-       <Text style={{fontSize:30}}>{AppState.shared.character.name}</Text> 
+       <View style={styles.snapFront}>
+       <Text style={{fontSize:30}}>This is the Secret Settings Screen</Text> 
        </View>
-       
+       <TouchableOpacity style={{...styles.snapFront, marginTop: 10}}
+        onPress={async () => {
+					let notificationToken = await AppState.shared.registerForPushNotificationsAsync()
+          let user = ObjectFactory.createUser(AppState.shared)
+          Fire.shared.sendUser(user)
+        }}
+        >
+        <Text style={{fontSize:30}}>Push this to register for notifications</Text> 
+        </TouchableOpacity>
+       <TouchableOpacity style={{...styles.snapFront, marginTop: 10}}
+        onPress={async () => {
+          AsyncStorage.clear()
+        }}
+        >
+        <Text style={{fontSize:30}}>Push this to wipe saved data</Text> 
+        </TouchableOpacity>
+
       </ScrollView>
     </View>
 	);

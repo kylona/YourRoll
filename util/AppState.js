@@ -12,6 +12,7 @@ import defaultPlayerAvatar from '../assets/images/defaultCharacter.png'
 import { Image } from 'react-native'
 import * as Notifications from 'expo-notifications';
 import { GiftedChat } from '../components/ChatUI';
+import Character from '../util/Character';
 
 
 class AppState {
@@ -25,7 +26,7 @@ class AppState {
     }
     this.player = {
       name: 'Unnamed Player',
-      avatar: Image.resolveAssetSource(defaultPlayerAvatar).uri,
+      avatar: defaultPlayerAvatar.uri,
       id: Fire.shared.uid
     }
     this.setTableDefaults(this, this.tables.active.id)
@@ -70,72 +71,7 @@ class AppState {
       persuasion: 'Persuasion: 1d20 + $chamod',
     }
     appState[tableId].messages = []
-    appState[tableId].character = {
-      name: "Unnamed",
-      avatar: 'https://firebasestorage.googleapis.com/v0/b/nova-rpg.appspot.com/o/uploads%2FToken_becs7qhdx.jpeg?alt=media&token=e0fb9238-e8c5-4a9b-b611-9fdf776f6b91',
-      level: '8',
-      XP: '0',
-      prof: '3',
-      race: '',
-      class: '',
-      strength: '10',
-      dexterity: '10',
-      constitution: '10',
-      intelligence: '10',
-      wisdom: '10',
-      charisma: '10',
-      strmod: '0',
-      dexmod: '0',
-      conmod: '0',
-      intmod: '0',
-      wismod: '0',
-      chamod: '0',
-      strsave: '$strmod',
-      dexsave: '$dexmod',
-      consave: '$conmod',
-      intsave: '$intmod',
-      wissave: '$wismod',
-      chasave: '$chamod',
-      coreStats: [
-        'strength',
-        'dexterity',
-        'constitution',
-        'intelligence',
-        'wisdom',
-        'charisma',
-        'level',
-        'race',
-        'class',
-       'strsave',
-       'dexsave',
-       'consave',
-       'intsave',
-       'wissave',
-       'chasave',
-      ],
-      computedStats: [
-       'prof',
-       'strmod',
-       'dexmod',
-       'conmod',
-       'intmod',
-       'wismod',
-       'chamod',
-      ],
-      statCalculations: [
-        'strmod = floor(strength/2)-5',
-        'dexmod = floor(dexterity/2)-5',
-        'conmod = floor(constitution/2)-5',
-        'intmod = floor(intelligence/2)-5',
-        'wismod = floor(wisdom/2)-5',
-        'chamod = floor(charisma/2)-5',
-        'prof = 2+floor((level-1)/4)',
-      ],
-      actionLayout: ObjectFactory.createActionLayout(),
-    }
-    BlobCache.shared.get(appState[tableId].character.avatar).then((res) => {
-      appState[tableId].character.cachedAvatar = res
-    })
+    appState[tableId].character = new Character()
   }
 
 
@@ -178,7 +114,7 @@ class AppState {
     return AppState.shared[AppState.shared.tables.active.id].character
   }
   set character(value) {
-    AppState.shared[AppState.shared.tables.active.id].character = value
+    AppState.shared[AppState.shared.tables.active.id].character = new Character(vlaue)
   }
 
   get map() {
@@ -216,7 +152,10 @@ class AppState {
     if (!AppState.shared.typing) {
       AppState.shared.typing = {}
     }
-    AppState.shared.typing[typing.id] = await BlobCache.shared.get(typing.avatar)
+    AppState.shared.typing[typing.id] = {
+      avatar: await BlobCache.shared.get(typing.avatar),
+      timestamp: typing.timestamp
+    }
     AppState.shared.saveState()
   }
 
@@ -245,12 +184,15 @@ class AppState {
     AppState.shared.lastReadMessage = message
     const cacheImages = async () => {
       if (message.user.avatar && message.user.avatar != null) {
+        message.user.remoteAvatar = message.user.avatar
         message.user.avatar = await BlobCache.shared.get(message.user.avatar)
       }
       if (message.image && message.image != null) {
+        message.remoteImage = message.image
         message.image = await BlobCache.shared.get(message.image)
       }
       if (message.audio && message.image != null) {
+        message.remoteAudio = message.audio
         message.audio = await BlobCache.shared.get(message.audio)
       }
     }
@@ -524,7 +466,7 @@ class AppState {
                 AppState.shared[table.id].macros = state[table.id].macros
               }
               if (state[table.id].character) {
-                AppState.shared[table.id].character = state[table.id].character
+                AppState.shared[table.id].character = new Character(state[table.id].character)
               }
               if (state[table.id].messages) {
                 AppState.shared[table.id].messages = state[table.id].messages
@@ -585,7 +527,7 @@ class AppState {
   }
 
   async saveState() {
-    AppState.shared.recalculateStats(AppState.shared.character)
+    AppState.shared.character.recalculateStats()
     let updateId = Fire.shared.uid
     if (updateId) {
       AppState.shared.player._id = updateId
@@ -595,7 +537,7 @@ class AppState {
       version: '0.09',
       player: AppState.shared.player,
     }
-    for (table of AppState.shared.tables.list) {
+    for (let table of AppState.shared.tables.list) {
       let truncatedMessages = AppState.shared[table.id].messages.slice(0, 50)
       const tableState = {
         macros: AppState.shared[table.id].macros,
@@ -650,21 +592,13 @@ class AppState {
     AppState.shared.saveState()
   }
 
-  recalculateStats(character) {
-    for (let calc in character.statCalculations) {
-      evaluate(character.statCalculations[calc], character)
-    }
-  }
-
-
   getStat(stat) {
-    if (AppState.shared.character.hasOwnProperty(stat)) {
-      return AppState.shared.character[stat]
-    }
-    return null
+    return AppState.shared.character.getStat(stat)
   }
 
   getMacro(hash) {
+    let macro = AppState.shared.charcter.getMacro(hash)
+    if (macro != null) return macro
     if (AppState.shared.macros.hasOwnProperty(hash)) {
       return AppState.shared.macros[hash]
     }

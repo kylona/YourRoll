@@ -8,10 +8,11 @@ import { Ionicons } from '@expo/vector-icons';
 import useColorScheme from '../hooks/useColorScheme';
 import oofReact from '../assets/images/oof.png';
 import komReact from '../assets/images/kombucha.png';
+import mfcReact from '../assets/images/monkeyface.png';
 import tudReact from '../assets/images/ThumbsUpDrake.png';
 import tddReact from '../assets/images/ThumbsDownDrake.png';
 import ccrReact from '../assets/images/CatCry.png';
-import cwoReact from '../assets/images/ChrisWow.png';
+import cwoReact from '../assets/images/leomeme.png';
 import lolReact from '../assets/images/Lol.png';
 import lvmReact from '../assets/images/LoveMeme.png';
 
@@ -25,7 +26,7 @@ export default function ReactionPanel(props) {
   })
 
 
-  let panelWidth = Platform.OS == 'ios' ? 450 : 400
+  let panelWidth = Platform.OS == 'ios' ? 480 : 430
   let maxScale = Dimensions.get('window').width/panelWidth
 
   React.useEffect(() => {
@@ -96,6 +97,9 @@ export default function ReactionPanel(props) {
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('kombucha')}>
             <Image style={styles.oof} source={komReact}/>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('monkeyface')}>
+            <Image style={styles.oof} source={mfcReact}/>
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('👍')}>
             <Image style={styles.oof} source={tudReact}/>

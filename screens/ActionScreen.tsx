@@ -49,7 +49,7 @@ export default function ActionScreen(props) {
 			/>
 		</ScrollView>
     <TouchableOpacity
-      style={styles.editButton(true)}
+      style={styles.editButton}
       onPress={() => {
         Keyboard.dismiss()
         setEditing(!editing)
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
     color: Colors['dark'].textDark
   },
-  editButton: () => {return({
+  editButton: {
     position: 'absolute',
     right: 15,
     bottom: 15,
@@ -131,6 +131,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: Colors['dark'].primaryLight,
     zIndex: 10,
-  })},
+  },
 });
 

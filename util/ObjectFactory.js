@@ -5,6 +5,7 @@ export default class ObjectFactory {
     return {
       id: Fire.shared.uid,
       avatar: appstate.character.avatar,
+      timestamp: Date.now(),
     }
   }
 
@@ -23,6 +24,9 @@ export default class ObjectFactory {
   static updateMessage(props) {
     const id = props.id
     let message = ObjectFactory.createMessage(props)
+    message.user.avatar = props.user.remoteAvatar
+    message.image = props.remoteImage
+    message.audio = props.remoteAudio
     message.id = id
     return message 
   }

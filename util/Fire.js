@@ -73,6 +73,10 @@ class Fire {
     return this.database.ref(Fire.shared.tableId).child('tokens');
   }
 
+  get characters() {
+    return this.database.ref(Fire.shared.uid).child('characters');
+  }
+
   get macros() {
     return this.database.ref(Fire.shared.tableId).child('macros');
   }
@@ -120,6 +124,7 @@ class Fire {
 
   onTypingReceived = (callback) => {
     this.typing.on('child_added', snapshot => callback(snapshot.val()));
+    this.typing.on('child_changed', snapshot => callback(snapshot.val()));
   }
 
   onTypingDeleted = callback => {
@@ -173,6 +178,15 @@ class Fire {
   onTokenRemoved = callback => {
     this.tokens.on('child_removed', snapshot => callback(snapshot.val()));
   }
+  onCharacterAdded = callback => {
+    this.characters.on('child_added', snapshot => callback(snapshot.val()));
+  }
+  onCharacterChanged = callback => {
+    this.characters.on('child_changed', snapshot => callback(snapshot.val()));
+  }
+  onCharacterRemoved = callback => {
+    this.characters.on('child_removed', snapshot => callback(snapshot.val()));
+  }
 
 
   onUserAdded = callback => {
@@ -186,7 +200,6 @@ class Fire {
   }
 
   onTableNameChanged = callback => {
-    console.log("SETTING TABLE NAME LISTENER")
     this.tableName.on('value', snapshot => callback(snapshot.val()))
   }
 
@@ -255,6 +268,15 @@ class Fire {
     //TODO delete image from storage
   }
 
+  sendCharacter = character => {
+    this.characters.child(character.name).set(character)
+  }
+
+  removeCharacter = character => {
+    this.characters.child(character.name).remove()
+    //TODO delete data from storage
+  }
+
   sendMacro = macro => {
     this.macros.child(macro.name).set(macro)
   }
@@ -279,6 +301,7 @@ class Fire {
     this.maps.off();
     this.pinnedMessage.off();
     this.tokens.off();
+    this.characters.off();
     this.users.off();
     this.tableName.off();
   }
@@ -289,11 +312,13 @@ class Fire {
     this.maps.off();
   }
   offPinnedMessage = () => {
-    console.log("OFF PINNED MESSAGE")
     this.pinnedMessage.off();
   }
   offTokens = () => {
     this.tokens.off();
+  }
+  offCharacters = () => {
+    this.characters.off();
   }
   offUsers = () => {
     this.users.off();

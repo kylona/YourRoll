@@ -1,12 +1,13 @@
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as React from 'react';
-import { ColorSchemeName } from 'react-native';
+import { Platform, ColorSchemeName } from 'react-native';
 import { TouchableOpacity, RefreshControl, Keyboard, StyleSheet, Text, TextInput, View, Image, AsyncStorage, Linking } from 'react-native';
 import NotFoundScreen from '../screens/NotFoundScreen';
 import MacroScreen from '../screens/MacroScreen';
 import TableScreen from '../screens/TableScreen';
 import CharacterSheetScreen from '../screens/CharacterSheetScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import { RootStackParamList } from '../types';
 import BottomTabNavigator from './BottomTabNavigator';
 import LinkingConfiguration from './LinkingConfiguration';
@@ -103,9 +104,24 @@ function RootNavigator() {
                   }}
                 >
                   <Avatar 
-                    image={AppState.shared.player.cachedAvatar}
+                    image={AppState.shared.character.cachedAvatar}
                     onPress={() => {
                       navigation.push("CharacterSheetScreen")
+                    }}
+                    size={50}
+                  />
+                </HeaderRight>
+              )
+              case 'TableScreen': return (
+                <HeaderRight
+                  onPress={() => {
+                    navigation.push("SettingsScreen")
+                  }}
+                >
+                  <Avatar 
+                    image={AppState.shared.player.cachedAvatar}
+                    onPress={() => {
+                      navigation.push("SettingsScreen")
                     }}
                     size={50}
                   />
@@ -120,6 +136,7 @@ function RootNavigator() {
       <Stack.Screen name="TableScreen" component={TableScreen} />
       <Stack.Screen name="MacroScreen" component={MacroScreen} />
       <Stack.Screen name="CharacterSheetScreen" component={CharacterSheetScreen} />
+      <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
     </Stack.Navigator>
   );
 }

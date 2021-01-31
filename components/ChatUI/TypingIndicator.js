@@ -61,7 +61,9 @@ const TypingIndicator = ({ isTyping }) => {
       let typeViews = []
       for (let t in isTyping) {
         if (t == Fire.shared.uid) continue
-        let typer = isTyping[t]
+        if (Date.now() - isTyping[t].timestamp >= 10000){ //if they sent less then 15 seconds ago
+          continue
+        }
         typeViews.push(
           <Animated.View style={[
             styles.container,
@@ -75,7 +77,7 @@ const TypingIndicator = ({ isTyping }) => {
                 marginBottom: marginScale,
             },
           ]}>
-          <Image style={styles.avatar} source={{uri: typer}}/>
+          <Image style={styles.avatar} source={{uri: isTyping[t].avatar}}/>
           <TypingAnimation style={{ marginLeft: 0 , marginTop: 1 }} dotRadius={3} dotMargin={5.5} dotColor={Colors['dark'].textDark}/>
           </Animated.View>
         )

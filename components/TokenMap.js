@@ -1,7 +1,7 @@
 import React from 'react'
 import {Platform, Dimensions, View, Image, StyleSheet, } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
-import ReactNativeZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView'
+import ReactNativeZoomableView from '../components/ZoomableView/src/ReactNativeZoomableView'
 import AppState from '../util/AppState';
 import Token from './Token';
 import TokenControls from '../components/TokenControls.js';
@@ -25,7 +25,9 @@ export default function TokenMap(props) {
 
   React.useEffect(() => {
     let unsubscribe = AppState.shared.addListener(() => {
-      setMap(AppState.shared.map.local)
+      if (AppState.shared.map) {
+        setMap(AppState.shared.map.local)
+      }
       setTokens([...AppState.shared.tokens])
     })
     return unsubscribe
