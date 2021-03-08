@@ -167,6 +167,7 @@ export default function SnapGrid(props) {
           renderFront = (onLongPress, onPressOut) => {
           return (
             <StatText
+              key={id}
               back={false}
               display={item.display}
               onDisplayChange={(text) => {

@@ -65,7 +65,9 @@ const TypingIndicator = ({ isTyping }) => {
           continue
         }
         typeViews.push(
-          <Animated.View style={[
+          <Animated.View
+          key={t}
+          style={[
             styles.container,
             {
                 transform: [

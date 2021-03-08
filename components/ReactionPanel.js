@@ -77,7 +77,7 @@ export default function ReactionPanel(props) {
     >
       <View style={containerStyle(panelScaleVal)}>
         <TouchableOpacity style={styles.roundContainer} onPress={props.replyPressed}>
-            <Ionicons name='ios-undo' style={styles.replyButton} size={27} color={Colors[theme].textLight}/>
+            <Ionicons name='arrow-undo-outline' style={styles.replyButton} size={27} color={Colors[theme].textLight}/>
         </TouchableOpacity>
         <View style={styles.emojiContainer}>
           <TouchableOpacity style={styles.iconButton} onPress={reactionPressed('😍')}>
@@ -109,7 +109,7 @@ export default function ReactionPanel(props) {
           </TouchableOpacity>
         </View>
         <TouchableOpacity style={styles.roundContainer} onPress={props.morePressed}>
-            <Ionicons name='ios-more' style={styles.replyButton} size={27} color={Colors[theme].textLight}/>
+            <Ionicons name='ellipsis-vertical-outline' style={styles.replyButton} size={27} color={Colors[theme].textLight}/>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>

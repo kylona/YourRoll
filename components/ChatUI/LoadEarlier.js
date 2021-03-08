@@ -6,7 +6,7 @@ import { StylePropType } from './utils';
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
-        marginTop: 5,
+        marginTop: 35,
         marginBottom: 10,
     },
     wrapper: {

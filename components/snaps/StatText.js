@@ -53,14 +53,14 @@ export default function StatText(props) {
         )
       }
       lineViews.push(
-        <View pointerEvents='box-none' onLongPress={props.onLongPress} style={styles.lineView}>
+        <View key={line} pointerEvents='box-none' onLongPress={props.onLongPress} style={styles.lineView}>
           {blingInputs}
         </View>
       )
 		}
 		
 		return (
-      <View pointerEvents='box-none' onLongPress={props.onLongPress} style={styles.snapFront}>
+      <View key={display} pointerEvents='box-none' onLongPress={props.onLongPress} style={styles.snapFront}>
         {lineViews}
 			</View>
 		);

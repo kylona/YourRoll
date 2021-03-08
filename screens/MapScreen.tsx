@@ -1,5 +1,7 @@
 import * as React from 'react';
-import { Slider, StyleSheet } from 'react-native';
+import {StyleSheet } from 'react-native';
+import Slider from '@react-native-community/slider';
+
 
 import EditScreenInfo from '../components/EditScreenInfo';
 import {Button, Text, View } from '../components/Themed';
@@ -27,9 +29,7 @@ export default function MapScreen() {
 
   React.useEffect(() => {
     return AppState.shared.addListener(() => {
-      if (AppState.shared.map) {
-        setGridScale(AppState.shared.map.scale) 
-      }
+      setGridScale(AppState.shared.map.scale) 
     })
   }, []);
 
@@ -40,7 +40,7 @@ export default function MapScreen() {
 			 	 setGridScale(value)
 			  }}
         onSlidingComplete={(value) => {
-          Fire.shared.sendMap(ObjectFactory.createMap(AppState.shared.map, {scale: value}))
+          Fire.shared.sendMapScale(value)
         }}
 				style={{
           top: 0,
@@ -129,7 +129,7 @@ export default function MapScreen() {
           }
         }}
       >
-        <Ionicons name={drawing ? 'ios-undo' : 'ios-add'}  style={{marginTop: 5}} size={40} color={Colors[theme].textDark}/>
+        <Ionicons name={drawing ? 'arrow-undo-outline' : 'ios-add'}  style={{marginTop: 5}} size={40} color={Colors[theme].textDark}/>
       </Button>
 
       {drawing ? palette:  slider}

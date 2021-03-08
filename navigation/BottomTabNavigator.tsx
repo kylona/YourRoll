@@ -54,7 +54,7 @@ export default function BottomTabNavigator() {
         name="Chat"
         component={ChatNavigator}
         options={{
-          tabBarIcon: ({ color }) => <TabBarIcon name="ios-text" color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon name="chatbubbles-outline" color={color} />,
           tabBarBadge: AppState.shared.unreadMessages == 0 ? undefined : AppState.shared.unreadMessages
         }}
       />

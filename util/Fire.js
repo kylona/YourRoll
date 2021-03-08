@@ -90,8 +90,7 @@ class Fire {
   }
 
   parseMessage(snapshot) {
-    const { timestamp: numberStamp, id, text, user, image, audio, reply, rolls, reactions } = snapshot.val();
-    const timestamp = new Date(numberStamp);
+    const { timestamp, id, text, user, image, audio, reply, rolls, reactions } = snapshot.val();
     return {
       _id: 'Message_' + Math.random().toString(36).substr(2,9),
       id,
@@ -107,7 +106,7 @@ class Fire {
   };
 
   get timestamp() {
-    return Date.now();
+    return firebase.database.ServerValue.TIMESTAMP;
   }
 
   onMacroReceived = (callback) => {
@@ -157,6 +156,7 @@ class Fire {
   }
 
   loadEarlierMessages = (earliest, callback) => {
+    console.log(earliest)
     this.messages
       .orderByChild('timestamp')
       .endAt(earliest.timestamp - 1)
@@ -207,6 +207,7 @@ class Fire {
   // send the message to the Backend
   sendMessages = messages => {
     for (let m in messages) {
+      messages[m].timestamp = firebase.database.ServerValue.TIMESTAMP
       this.messages.child(messages[m].id).set(messages[m])
     }
   };
@@ -249,6 +250,10 @@ class Fire {
 
   sendMap = map => {
       this.maps.set(map);
+  };
+
+  sendMapScale = scale => {
+      this.maps.child('scale').set(scale);
   };
 
   sendPinnedMessage = text => {

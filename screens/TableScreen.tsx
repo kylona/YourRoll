@@ -34,10 +34,10 @@ export default function TableScreen(props) {
     let table = tables[t]
     tableItems.push( 
       <TableItem
+        key={table}
         index={t}
         name={table.name}
         onPress={() => {
-          console.log(table)
           AppState.shared.changeTable(table)
           props.navigation.pop()
         }}

@@ -80,6 +80,7 @@ export default function TokenMap(props) {
     if (props.onTokenRemove) props.onTokenRemove(token)
   }
   const updateToken = (token) => {
+    console.log("Updating Token:" + token)
     if (props.onTokenUpdate) props.onTokenUpdate(tokens, token)
   }
 
@@ -95,7 +96,11 @@ export default function TokenMap(props) {
             zoomStep={0}
             bindToBorders={false}
             style={styles.zoomView}
-            onShiftingBefore={() => {setSelectedName('')}}
+            onShiftingAfter={(e) => {
+              setTimeout(() => {
+                setSelectedName('')
+              }, 200)
+            }}
             onZoomEnd={(e, ges, zoom) => {
               setZoomLevel(zoom.zoomLevel)
             }}

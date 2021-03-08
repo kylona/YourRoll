@@ -24,7 +24,8 @@ import komReact from '../assets/images/kombucha.png';
 import tudReact from '../assets/images/ThumbsUpDrake.png';
 import tddReact from '../assets/images/ThumbsDownDrake.png';
 import ccrReact from '../assets/images/CatCry.png';
-import cwoReact from '../assets/images/ChrisWow.png';
+import leoReact from '../assets/images/leomeme.png';
+import mfcReact from '../assets/images/monkeyface.png';
 import lolReact from '../assets/images/Lol.png';
 import lvmReact from '../assets/images/LoveMeme.png';
 
@@ -353,6 +354,10 @@ export default function ChatScreen(props) {
       reactionText = reactionText.replace("kombucha", "")
       oofs.push(<Image key={Math.random()} style={styles.oof} source={komReact}/>)
     }
+    while(reactionText.includes("monkeyface")) {
+      reactionText = reactionText.replace("monkeyface", "")
+      oofs.push(<Image key={Math.random()} style={styles.oof} source={mfcReact}/>)
+    }
     while(reactionText.includes("👍")) {
       reactionText = reactionText.replace("👍", "")
       oofs.push(<Image key={Math.random()} style={styles.oof} source={tudReact}/>)
@@ -367,8 +372,9 @@ export default function ChatScreen(props) {
     }
     while(reactionText.includes("😎")) {
       reactionText = reactionText.replace("😎", "")
-      oofs.push(<Image key={Math.random()} style={styles.oof} source={cwoReact}/>)
+      oofs.push(<Image key={Math.random()} style={styles.oof} source={leoReact}/>)
     }
+    /*
     while(reactionText.includes("😂")) {
       reactionText = reactionText.replace("😂", "")
       oofs.push(<Image key={Math.random()} style={styles.oof} source={lolReact}/>)
@@ -377,6 +383,7 @@ export default function ChatScreen(props) {
       reactionText = reactionText.replace("😍", "")
       oofs.push(<Image key={Math.random()} style={styles.oof} source={lvmReact}/>)
     }
+    */
     return (
       <TouchableOpacity
         style={riStyle}
