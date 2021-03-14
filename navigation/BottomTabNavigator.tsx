@@ -11,7 +11,6 @@ import ChatScreen from '../screens/ChatScreen';
 import MacroScreen from '../screens/MacroScreen';
 import { BottomTabParamList, TabOneParamList, TabTwoParamList } from '../types';
 import { TouchableOpacity, Text, View } from 'react-native';
-import {HeaderTitle, HeaderRight} from '../components/Header.js';
 import AppState from '../util/AppState';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamList>();

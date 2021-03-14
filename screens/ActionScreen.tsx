@@ -44,6 +44,7 @@ export default function ActionScreen(props) {
 				onSwipeRight={() => {navigation.jumpTo('Map');Keyboard.dismiss()}}
 				onSwipeLeft={() => {navigation.jumpTo('Chat');Keyboard.dismiss()}}
         onDoubleTap={() => {setEditing(!editing)}}
+        onCreateCharacter={() => {navigation.navigate('CharacterSheetScreen');Keyboard.dismiss()}}
         update={update} //for forced update
         scrollEnabled={scrollEnabled}
 			/>

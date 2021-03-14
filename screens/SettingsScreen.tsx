@@ -51,6 +51,14 @@ export default function SettingScreen(props) {
         >
         <Text style={{fontSize:30}}>Push this to wipe saved data</Text> 
         </TouchableOpacity>
+       <TouchableOpacity style={{...styles.snapFront, marginTop: 10}}
+        onPress={ () => {
+          getStuff()
+        }
+        }
+        >
+        <Text style={{fontSize:30}}>Push this to throw an error</Text> 
+        </TouchableOpacity>
 
       </ScrollView>
     </View>

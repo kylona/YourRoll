@@ -11,6 +11,7 @@ export default function SnapDraggable(props) {
     const [size, setSize] = React.useState(props.size || {x: 1, y:1})
     const [draggable, setDraggable] = React.useState(false)
     const [lastPress, setLastPress] = React.useState(0)
+    const [timeoutHandle, setTimeoutHandle] = React.useState(0)
     const [flipped, setFlipped] = React.useState(props.flipped)
 
     pan.setOffset({x: 100, y:100})
@@ -153,38 +154,36 @@ export default function SnapDraggable(props) {
   let frontView = props.renderFront(grabOnLongPress, onLetGo, onResize)
   let backView = props.renderBack(grabOnLongPress, onLetGo, onResize)
   let view = flipped ? backView : frontView 
-  let handle = (
-    <TouchableOpacity activeOpacity={1} style={styles.handle}
-      onPress={() => {
-        var delta = new Date().getTime() - lastPress;
-        if (lastPress == 0) {
-          setTimeout(() => {
-            if (lastPress != 0) {
-              if (props.onTap) onTap(snapObject(), val.x, val.y)
-            }
-            setLastPress(0)
-          }, 200)
-          setLastPress(new Date().getTime()) }
-        else if(delta < 200) {
-          setLastPress(0)
+  let handleTouch = () => {
+        var thisPress = new Date().getTime()
+        var delta = thisPress - lastPress;
+        if(delta < 200) {
           if (props.onDoubleTap) props.onDoubleTap(snapObject(), val.x, val.y)
+          clearTimeout(timeoutHandle)
         }
         else {
-          setLastPress(new Date().getTime())
+          setTimeoutHandle(setTimeout(() => {
+            if (props.onTap) {
+              props.onTap(snapObject(), val.x, val.y)
+            }
+          }, 200))
+          setLastPress(thisPress)
         }
-      }}
+  }
+
+  let handle = (
+    <TouchableOpacity activeOpacity={1} style={styles.handle}
+      onPressIn={handleTouch}
       delayLongPress={50}
       //onPressOut={onLetGo}
       onLongPress={grabOnLongPress}
 			onContentSizeChange={(e) => {
         let height = e.nativeEvent.contentSize.height
-        console.log(height)
 			}}
     >
       {view}
     </TouchableOpacity>
   )
-
 
 
   return (

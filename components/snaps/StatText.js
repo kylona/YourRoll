@@ -60,7 +60,7 @@ export default function StatText(props) {
 		}
 		
 		return (
-      <View key={display} pointerEvents='box-none' onLongPress={props.onLongPress} style={styles.snapFront}>
+      <View key={display} onPress={props.onPress} onLongPress={props.onLongPress} style={styles.snapFront}>
         {lineViews}
 			</View>
 		);

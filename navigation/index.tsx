@@ -16,6 +16,13 @@ import {HeaderTitle, HeaderRight} from '../components/Header.js';
 import AppState from '../util/AppState';
 import Avatar from '../components/Avatar';
 import { Ionicons } from '@expo/vector-icons';
+import {setJSExceptionHandler, setNativeExceptionHandler} from 'react-native-exception-handler';
+
+
+setJSExceptionHandler((error, isFatal) => {
+ //Ignore all errors in mission mode. Let's hope for the best.
+ //TODO handle things better
+});
 
 // If you are not familiar with React Navigation, we recommend going through the
 // "Fundamentals" guide: https://reactnavigation.org/docs/getting-started
@@ -106,7 +113,7 @@ function RootNavigator() {
                   <Avatar 
                     image={AppState.shared.character.cachedAvatar}
                     onPress={() => {
-                      navigation.push("CharacterSheetScreen")
+                      navigation.navigate("CharacterSheetScreen")
                     }}
                     size={50}
                   />
@@ -115,13 +122,13 @@ function RootNavigator() {
               case 'TableScreen': return (
                 <HeaderRight
                   onPress={() => {
-                    navigation.push("SettingsScreen")
+                    navigation.navigate("SettingsScreen")
                   }}
                 >
                   <Avatar 
                     image={AppState.shared.player.cachedAvatar}
                     onPress={() => {
-                      navigation.push("SettingsScreen")
+                      navigation.navigate("SettingsScreen")
                     }}
                     size={50}
                   />

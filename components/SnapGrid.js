@@ -7,6 +7,7 @@ import StatText from '../components/snaps/StatText';
 import TextBox from '../components/snaps/TextBox';
 import SnapAvatar from '../components/snaps/SnapAvatar';
 import AppState from '../util/AppState';
+import ImagePicker from '../util/ImagePicker';
 import Colors from '../constants/Colors';
 
 export default function SnapGrid(props) {
@@ -162,6 +163,7 @@ export default function SnapGrid(props) {
         let item = layout[id]
         let renderFront = () => null
         let renderBack = () => null
+        let onTap = null
         switch (item.type) {
           case "SnapText":
           renderFront = (onLongPress, onPressOut) => {
@@ -238,9 +240,31 @@ export default function SnapGrid(props) {
             />)
           }
           break
+          case "CreateCharacter":
+          renderFront = (onLongPress, onPressOut) => {
+          return (
+            <StatText
+              key={id}
+              back={false}
+              display={item.display}
+              onLongPress={onLongPress}
+            />)
+          }
+          renderBack = (onLongPress, onPressOut) => {
+          return (
+            <StatText
+              back={false}
+              display={item.display}
+              onDisplayChange={(text) => {
+                layout[id].display = text
+                AppState.shared.saveState()
+              }}
+              onLongPress={onLongPress}
+            />)
+          }
+          onTap = props.onCreateCharacter
+          break
             
-        }
-        if (item.type == "SnapText") {
         }
         snaps.push(
           <SnapDraggable
@@ -255,7 +279,7 @@ export default function SnapGrid(props) {
             width={colWidth*item.size.x}
             height={rowHeight*item.size.y}
             onDoubleTap={(tapped, x, y) => {props.onDoubleTap(tapped, x, y)}}
-            onTap={item.onTap}
+            onTap={onTap}
             renderFront={renderFront}
             renderBack={renderBack}
             id={id}

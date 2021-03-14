@@ -5,6 +5,7 @@ import { ScrollView } from 'react-native-gesture-handler';
 import GestureRecognizer, {swipeDirections} from 'react-native-swipe-gestures';
 import SnapGrid from '../components/SnapGrid.js';
 import Fire from '../util/Fire';
+import Compendium from '../util/Compendium';
 import AppState from '../util/AppState';
 import ObjectFactory from '../util/ObjectFactory';
 import Colors from '../constants/Colors.ts'
@@ -13,7 +14,7 @@ import BlobCache from '../util/BlobCache';
 
 
 export default function CharacterSheetScreen(props) {
-
+  console.log(Compendium.shared)
   const [scrollEnabled, setScrollEnabled] = React.useState(true)
   const [characterStats, setCharacterStats] = React.useState(AppState.shared.character.stats) //code to remember characterStats
   const [statCalculations, setStatCalculations] = React.useState(AppState.shared.character.statCalculations)
